@@ -1,0 +1,26 @@
+To run:
+pnpm dev
+
+    Folder Structure (src/):
+app/ - Next.js routes, layouts, server components
+components/ - shared/reuasable UI building blocks (Button, Card, Navbar)
+features/ - feature-sliced code (items/, reviews/, profiles/, etc. )
+hooks/ - global React hooks (useToast, useMediaQuery, etc.)
+lib/ - framework-agnostic helpers (fetch, auth, server/client utils)
+styles/ - global CSS, token, Tailwind entry, mixins
+test/ - test setup / test utils
+types/ - global TypeScrips types
+utils/ - small one-off helpers (formatCurrency, cn, etc.)
+
+(Optional)
+__mocks__/ - mock data for tests
+config/ - app-wide config
+
+    Folder Structure feature (items/):
+components/ - UI components specific to items (ItemCard, ItemForm)
+hooks/ - domain specific hooks (useItemFilters.ts)
+lib/ - logic layer, fetching, schemas, etc. (queries.ts, schema.ts)
+pages/ - if feature has its own routes
+
+(Potential features)
+items/, reviews/, profiles/, collections/, auth/
