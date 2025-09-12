@@ -12,7 +12,7 @@ test/ - test setup / test utils
 types/ - global TypeScrips types
 utils/ - small one-off helpers (formatCurrency, cn, etc.)
 
-(Optional)
+    (Optional)
 __mocks__/ - mock data for tests
 config/ - app-wide config
 
@@ -21,6 +21,13 @@ components/ - UI components specific to items (ItemCard, ItemForm)
 hooks/ - domain specific hooks (useItemFilters.ts)
 lib/ - logic layer, fetching, schemas, etc. (queries.ts, schema.ts)
 pages/ - if feature has its own routes
+
+    (Optional lib/):
+actions.ts   # if you use Next.js server actions for mutations
+keys.ts      # if you adopt React Query
+filters.ts   # if filters are used in multiple places
+constants.ts # if you have shared enums/options for the feature 
+
 
 (Potential features)
 items/, reviews/, profiles/, collections/, auth/

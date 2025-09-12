@@ -1,6 +1,5 @@
 // import { getItems } from ""
 
-import { getItems } from "@/features/items/server";
 import { api } from "@/lib/fetch";
 
 export default async function ItemsPage() {
@@ -8,4 +7,4 @@ export default async function ItemsPage() {
     const items = await api<any[]>("/items");
     // return <div>Hello</div>
     return <pre>{JSON.stringify(items, null, 2)}</pre>;
-}
+}   
