@@ -31,3 +31,13 @@ constants.ts # if you have shared enums/options for the feature
 
 (Potential features)
 items/, reviews/, profiles/, collections/, auth/
+
+
+to generate github ssh key:
+    ssh-keygen -t ed25519 -C "your_email@example.com"
+    cat ~/.ssh/id_ed25519.pub
+add SSH keys to gihub
+    eval "$(ssh-agent -s)"
+    ssh-add ~/.ssh/id_ed25519
+
+    git clone git@github.com:fit-folio/fitfolio-website.git
