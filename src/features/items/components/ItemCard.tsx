@@ -21,7 +21,7 @@ export default function ItemCard({ item }: ItemCardProps) {
     <Link href={`/items/${item.slug}`} className="block">
       <div className="w-[260px] min-h-[260px] bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity">
         {/* Product Image */}
-        <div className="relative w-full h-[160px] bg-white flex-shrink-0">
+        <div className="relative w-full h-[160px] flex-shrink-0">
           <Image
             src={item.image_url ? item.image_url : '/tnf-jacket.jpg'}
             alt={item.title}

@@ -1,10 +1,11 @@
 'use client';
 
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useMemo } from "react";
 import { Search, ChevronDown, ChevronUp, User2 } from "lucide-react";
 import SearchIcon from "./SearchIcon";
 import NavbarChevron from "./NavbarChevron";
 import Image from "next/image";
+import { searchItems, getItemTitle, type SearchItem } from "@/lib/search";
 
 /**
  * FitFolio Navbar (Desktop)
@@ -51,6 +52,7 @@ export default function FitFolioNavbarDesktop({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const searchIconBtnRef = useRef<HTMLButtonElement | null>(null);
   const [searchInput, setSearchInput] = useState("");
+  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -90,6 +92,25 @@ export default function FitFolioNavbarDesktop({
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [isSearching, onSearch]);
+
+  // Search items when input changes
+  useEffect(() => {
+    let isCancelled = false;
+    
+    if (searchInput.trim()) {
+      searchItems(searchInput, 10).then(results => {
+        if (!isCancelled) {
+          setSearchResults(results);
+        }
+      });
+    } else {
+      setSearchResults([]);
+    }
+    
+    return () => {
+      isCancelled = true;
+    };
+  }, [searchInput]);
 
   // Focus search input when opened
   useEffect(() => {
@@ -150,7 +171,7 @@ export default function FitFolioNavbarDesktop({
               {isSearching && (
                 <div 
                   ref={searchRef}
-                  className="absolute top-1/2  left-1/2 -translate-x-1/2 w-[550px] max-w-2xl px-4 pt-2 pb-4 z-40"
+                  className="absolute top-full left-1/2 -translate-x-1/2 w-[550px] max-w-2xl px-4 pb-4 z-40"
                 >
                   {/* Chevron pointing down from navbar */}
                   <div className="flex justify-center ">
@@ -172,44 +193,74 @@ export default function FitFolioNavbarDesktop({
                     />
                   </div>
 
-                  <div className="bg-[#55C1FF]/3 p-4 rounded-3xl w-full mt-4 flex flex-col gap-4 items-center justify-center">
-                    <div className="bg-[#111729] w-full rounded-full px-6 py-3
-                    flex items-center justify-between">
-                      <div className="flex rounded-full px-8 py-1 bg-white/6">
-                        <span>Items</span>
+                  {searchInput.trim() && (
+                    <div className="bg-[#55C1FF]/3 p-4 rounded-3xl w-full mt-4 flex flex-col gap-4 items-center justify-center max-h-[500px] overflow-y-auto scrollbar-hide">
+                      <div className="bg-[#111729] w-full rounded-full px-6 py-3
+                      flex items-center justify-between">
+                        <div className="flex rounded-full px-8 py-1 bg-white/6">
+                          <span>Items {searchResults.length > 0 && `(${searchResults.length})`}</span>
+                        </div>
+                        <div className="flex rounded-full px-8 py-1 bg-white/6 items-center gap-2">
+                          <span>Search with filters</span>
+                          <svg width="20" height="20" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                            <path d="M6.2064 9.71499C6.12746 10.0096 5.83069 10.3442 5.54427 10.4279L4.74557 10.685C4.00807 10.9066 3.24682 10.2316 3.45647 9.4492L4.14881 6.86535C4.24069 6.52244 4.16526 6.03118 4.03195 5.73664L2.70018 3.28854C2.51986 2.97623 2.44316 2.4898 2.5221 2.1952L2.82233 1.07472C2.97892 0.490334 3.53619 0.168608 4.07227 0.312252L10.515 2.03856C11.051 2.18221 11.3728 2.73948 11.2292 3.27557L10.9419 4.34774C10.8371 4.73894 10.4601 5.16074 10.1539 5.33752" stroke="#55C1FF" strokeWidth="0.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M7.38132 8.70985C8.23486 8.93855 9.11221 8.43202 9.34091 7.57848C9.56962 6.72493 9.06308 5.84759 8.20954 5.61888C7.356 5.39018 6.47866 5.89671 6.24995 6.75025C6.02125 7.60379 6.52778 8.48114 7.38132 8.70985Z" stroke="#55C1FF" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M9.1392 9.4914L8.78564 8.87903" stroke="#55C1FF" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </div>                      
                       </div>
-                      <div className="flex rounded-full px-8 py-1 bg-white/6 items-center gap-2">
-                        <span>Search with filters</span>
-                        <svg width="20" height="20" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
-                          <path d="M6.2064 9.71499C6.12746 10.0096 5.83069 10.3442 5.54427 10.4279L4.74557 10.685C4.00807 10.9066 3.24682 10.2316 3.45647 9.4492L4.14881 6.86535C4.24069 6.52244 4.16526 6.03118 4.03195 5.73664L2.70018 3.28854C2.51986 2.97623 2.44316 2.4898 2.5221 2.1952L2.82233 1.07472C2.97892 0.490334 3.53619 0.168608 4.07227 0.312252L10.515 2.03856C11.051 2.18221 11.3728 2.73948 11.2292 3.27557L10.9419 4.34774C10.8371 4.73894 10.4601 5.16074 10.1539 5.33752" stroke="#55C1FF" strokeWidth="0.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M7.38132 8.70985C8.23486 8.93855 9.11221 8.43202 9.34091 7.57848C9.56962 6.72493 9.06308 5.84759 8.20954 5.61888C7.356 5.39018 6.47866 5.89671 6.24995 6.75025C6.02125 7.60379 6.52778 8.48114 7.38132 8.70985Z" stroke="#55C1FF" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"/>
-                          <path d="M9.1392 9.4914L8.78564 8.87903" stroke="#55C1FF" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"/>
-                        </svg>
-                      </div>                      
+                      
+                      {searchResults.length === 0 ? (
+                        <div className="bg-[#111729] w-full rounded-3xl px-6 py-6 text-center">
+                          <p className="text-white/60">No items found. Try a different search.</p>
+                        </div>
+                      ) : (
+                        searchResults.map((item, index) => {
+                          const title = getItemTitle(item);
+                          const imageUrl = item.image || '/nike-shoes.jpg';
+                          const price = item.price || 'Price not available';
+                          
+                          return (
+                            <div 
+                              key={index}
+                              className="bg-[#111729] w-full flex items-center 
+                              px-6 py-6 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
+                              onClick={() => {
+                                if (item.url && onNavigate) {
+                                  // You might want to navigate to an item detail page instead
+                                  // onNavigate(`/items/${item.slug || item.id}`);
+                                  window.open(item.url, '_blank');
+                                }
+                              }}
+                            >
+                              <div className="rounded-xl bg-white/6 overflow-hidden flex-shrink-0">
+                                <Image 
+                                  src={imageUrl} 
+                                  alt={title} 
+                                  width={100} 
+                                  height={100}
+                                  className="object-cover"
+                                  onError={(e) => {
+                                    // Fallback to default image if image fails to load
+                                    e.currentTarget.src = '/nike-shoes.jpg';
+                                  }}
+                                />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="text-[20px] text-white truncate">{title}</p>
+                                <span className="text-[16px] text-white/70">{price}</span>
+                                {item.description && (
+                                  <p className="text-[14px] text-white/50 mt-1 line-clamp-2">
+                                    {item.description.substring(0, 100)}...
+                                  </p>
+                                )}
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
-                    
-                    <div className="bg-[#111729] w-full flex items-centerrounded-full 
-                    px-6 py-6 rounded-3xl gap-4">
-                      <div className=" rounded-xl bg-white/6 overflow-hidden">
-                        <Image src="/nike-shoes.jpg" alt="Icon 1" width={100} height={100} />
-                      </div>
-                      <div className=" rounded-full px-2">
-                        <p className="text-[20px]">Nike Zoom Vomero Roam</p>
-                        <span className="text-[16px]">$199.99</span>
-                      </div>
-                    </div>
-                    <div className="bg-[#111729] w-full flex items-centerrounded-full 
-                    px-6 py-6 rounded-3xl gap-4">
-                      <div className=" rounded-xl bg-white/6 overflow-hidden">
-                        <Image src="/nike-shoes.jpg" alt="Icon 1" width={100} height={100} />
-                      </div>
-                      <div className=" rounded-full px-2">
-                        <p className="text-[20px]">Nike Zoom Vomero Roam</p>
-                        <span className="text-[16px]">$199.99</span>
-                      </div>
-                    </div>                    
-                    
-                  </div>
+                  )}
                 </div>
               )}
 
