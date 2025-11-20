@@ -171,7 +171,7 @@ export default function FitFolioNavbarDesktop({
               {isSearching && (
                 <div 
                   ref={searchRef}
-                  className="absolute top-1/2 translate-y-2 left-1/2 -translate-x-1/2 w-[550px] max-w-2xl px-4 pb-4 z-40"
+                  className="absolute top-full left-1/2 -translate-x-1/2 w-[550px] max-w-2xl px-4 pb-4 z-40"
                 >
                   {/* Chevron pointing down from navbar */}
                   <div className="flex justify-center ">
@@ -194,8 +194,8 @@ export default function FitFolioNavbarDesktop({
                   </div>
 
                   {searchInput.trim() && (
-                    <div className="bg-[#55C1FF]/3 p-4 rounded-3xl w-full mt-4 flex flex-col gap-4 items-center justify-center ">
-                      <div className="bg-[#111729] w-full rounded-full px-6 py-3 overflow-hidden
+                    <div className="bg-[#55C1FF]/3 p-4 rounded-3xl w-full mt-4 flex flex-col gap-4 items-center justify-center max-h-[500px] overflow-y-auto scrollbar-hide">
+                      <div className="bg-[#111729] w-full rounded-full px-6 py-3
                       flex items-center justify-between">
                         <div className="flex rounded-full px-8 py-1 bg-white/6">
                           <span>Items {searchResults.length > 0 && `(${searchResults.length})`}</span>
@@ -210,11 +210,9 @@ export default function FitFolioNavbarDesktop({
                         </div>                      
                       </div>
                       
-                      <div className=" py-2 max-h-[500px] w-full flex flex-col gap-2 overflow-y-auto scrollbar-hide">
-                        
                       {searchResults.length === 0 ? (
                         <div className="bg-[#111729] w-full rounded-3xl px-6 py-6 text-center">
-                          <p className="text-white/60 w-full">No items found. Try a different search.</p>
+                          <p className="text-white/60">No items found. Try a different search.</p>
                         </div>
                       ) : (
                         searchResults.map((item, index) => {
@@ -225,7 +223,7 @@ export default function FitFolioNavbarDesktop({
                           return (
                             <div 
                               key={index}
-                              className="bg-[#111729] w-full flex items-center
+                              className="bg-[#111729] w-full flex items-center 
                               px-6 py-6 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
                               onClick={() => {
                                 if (item.url && onNavigate) {
@@ -261,7 +259,6 @@ export default function FitFolioNavbarDesktop({
                           );
                         })
                       )}
-                      </div>
                     </div>
                   )}
                 </div>
