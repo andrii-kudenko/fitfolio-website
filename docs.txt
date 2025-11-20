@@ -1,5 +1,15 @@
 To run:
 pnpm dev
+To add a new library:
+pnpm add <library-name>
+To remove a library:
+pnpm remove <library-name>
+To update a library:
+pnpm update <library-name>
+To install all dependencies:
+pnpm install
+To install a specific version of a library:
+pnpm add <library-name>@<version>
 
     Folder Structure (src/):
 app/ - Next.js routes, layouts, server components
