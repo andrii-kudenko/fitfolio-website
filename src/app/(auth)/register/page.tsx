@@ -1,4 +1,4 @@
-export default function ProfilePage() {
+export default function RegisterPage() {
     return null; // or <></> or <div />
   }
   

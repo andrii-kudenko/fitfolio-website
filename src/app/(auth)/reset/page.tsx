@@ -1,4 +1,4 @@
-export default function ProfilePage() {
+export default function ResetPage() {
     return null; // or <></> or <div />
   }
   
