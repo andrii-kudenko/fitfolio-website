@@ -1,7 +1,7 @@
 'use client';
 
 import FitFolioNavbarDesktop from "@/components/navbar/Navbar";
-import Banner from "@/components/Banner";
+import Banner from "@/components/ui/Banner";
 import ScrollableItemList from "@/features/items/components/ScrollableItemList";
 import Image from "next/image";
 import { useState } from "react";
@@ -231,7 +231,7 @@ export default function Home() {
   const [isSearching, setIsSearching] = useState(false);
   return (
     <>
-      <FitFolioNavbarDesktop
+      {/* <FitFolioNavbarDesktop
           isAuthenticated={false}
           onNavigate={(path) => console.log("navigate:", path)}
           onLogin={() => console.log("login")}
@@ -239,11 +239,11 @@ export default function Home() {
           onLogout={() => console.log("logout")}
           onSearch={() => setIsSearching(!isSearching)}
           isSearching={isSearching}
-        />
+        /> */}
       
       {/* Hero Section */}
-      <section className="min-h-screen bg-ff-black flex items-center justify-center">
-        <div className={`absolute top-0 left-0 w-full h-full ${isSearching ? " bg-black/70" : ""}`}></div>
+      <section className="h-[100vh] bg-ff-black flex items-center justify-center">
+        {/* <div className={`absolute top-0 left-0 w-full h-full ${isSearching ? " bg-black/70" : ""}`}></div> */}
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium text-white mb-6 leading-tight">
@@ -263,9 +263,11 @@ export default function Home() {
       <section className="flex flex-col items-center justify-center wrap">
 
         {/* Content Frame */}
-        <div className="w-full items-center justify-center flex flex-col gap-20 px-50">
+        <div className="w-full max-w-[1440px] items-center justify-center flex flex-col gap-20">
           {/* Banner Section */}
-          <Banner />
+          <div className="w-[100%]">
+            <Banner />
+          </div>
 
           {/* Recommended For You */}
           <ScrollableItemList items={recommendedItems} title="Recommended For You" />
