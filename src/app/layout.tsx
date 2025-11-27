@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import FitFolioNavbarDesktop from "@/components/navbar/Navbar";
+import NavbarWrapper from "@/components/layout/NavbarWrapper";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -28,11 +28,10 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
       >
-        {/* Navbar visible on every page */}
-        <FitFolioNavbarDesktop isAuthenticated={false} />
+        <NavbarWrapper isAuthenticated={false} />
 
         {/* Page content (Home, Profile, Items, etc.) */}
-        <div className="pt-20">
+        <div className="">
           {children}
         </div>
       </body>

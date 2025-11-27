@@ -16,7 +16,7 @@ export default function ProfilePage() {
           {/* Banner Image */}
           <div className="relative h-64 w-full md:h-80">
             <img
-              src="/banner-default.jpg"
+              src="/profile-bg2.jpg"
               alt="Profile banner"
               className="h-full w-full object-cover opacity-90"
             />
@@ -31,7 +31,7 @@ export default function ProfilePage() {
               <div className="flex items-end gap-4">
                 <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full border-4 border-black bg-slate-700">
                   <img
-                    src="placeholder-avatar.png"
+                    src="/face.jpg"
                     alt={username}
                     className="h-full w-full object-cover"
                   />
@@ -163,10 +163,15 @@ function ReviewsTab() {
             <div className="flex items-center gap-3">
               <div className="h-14 w-14 overflow-hidden rounded-lg border border-slate-700 bg-slate-900">
                 <img
+                  src="/tnf-jacket.jpg"
+                  alt="TNf Jacket"
+                  className="h-full w-full object-cover"
+                />
+                {/* <img
                   src={review.productImage}
                   alt={review.itemName}
                   className="h-full w-full object-cover"
-                />
+                /> */}
               </div>
             </div>
             <div className="text-sm text-slate-100">{review.itemName}</div>
@@ -184,10 +189,15 @@ function ReviewsTab() {
             <div className="mt-3 flex items-center gap-3">
               <div className="h-10 w-10 overflow-hidden rounded-full bg-slate-700">
                 <img
-                  src={review.avatarImage}
+                  src="/face.jpg"
                   alt={review.author}
                   className="h-full w-full object-cover"
                 />
+                {/* <img
+                  src={review.avatarImage}
+                  alt={review.author}
+                  className="h-full w-full object-cover"
+                /> */}
               </div>
               <div className="text-sm text-slate-200">{review.author}</div>
             </div>

@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
+import { useRouter } from "next/navigation";
 import { Search, ChevronDown, ChevronUp, User2 } from "lucide-react";
 import SearchIcon from "./SearchIcon";
 import NavbarChevron from "./NavbarChevron";
@@ -42,10 +43,15 @@ export default function FitFolioNavbarDesktop({
   onSignup,
   onLogout,
   onSearch,
-  isSearching,
+  isSearching: isSearchingProp,
 }: NavbarDesktopProps) {
+  const router = useRouter();
   const [open, setOpen] = useState(false);
-  // const [searchIconClicked, setSearchIconClicked] = useState(isSearching);
+  // Internal state for search if not controlled by parent
+  const [internalSearching, setInternalSearching] = useState(false);
+  // Use prop if provided, otherwise use internal state
+  const isSearching = isSearchingProp !== undefined ? isSearchingProp : internalSearching;
+  
   const btnRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const searchRef = useRef<HTMLDivElement | null>(null);
@@ -73,11 +79,17 @@ export default function FitFolioNavbarDesktop({
       const t = e.target as Node;
       // Don't close if clicking on the search bar or the search icon button itself
       if (searchRef.current?.contains(t) || searchIconBtnRef.current?.contains(t)) return;
-      onSearch?.();
+      if (onSearch) {
+        onSearch();
+      } else {
+        setInternalSearching(false);
+        setSearchInput("");
+        setSearchResults([]);
+      }
     }
     document.addEventListener("mousedown", onDocClick);
     return () => document.removeEventListener("mousedown", onDocClick);
-  }, [isSearching]);
+  }, [isSearching, onSearch]);
 
   // Close on ESC
   useEffect(() => {
@@ -85,7 +97,13 @@ export default function FitFolioNavbarDesktop({
       if (e.key === "Escape") {
         setOpen(false);
         if (isSearching) {
-          onSearch?.();
+          if (onSearch) {
+            onSearch();
+          } else {
+            setInternalSearching(false);
+            setSearchInput("");
+            setSearchResults([]);
+          }
         }
       }
     }
@@ -120,15 +138,33 @@ export default function FitFolioNavbarDesktop({
   }, [isSearching]);
 
   const handleNavigate = (path: string) => {
-    onNavigate?.(path);
+    if (onNavigate) {
+      onNavigate(path);
+    } else {
+      router.push(path);
+    }
   };
 
   const handleSearchClick = () => {
-    onSearch?.();
+    console.log("search clicked");
+    if (onSearch) {
+      onSearch();
+    } else {
+      setInternalSearching(prev => {
+        const newValue = !prev;
+        // Clear search input when closing
+        if (!newValue) {
+          setSearchInput("");
+          setSearchResults([]);
+        }
+        return newValue;
+      });
+    }
+    console.log(isSearching);
   };
 
   return (
-    <header className="absolute top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ">
+    <header className="sticky top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ">
       <div className="mx-auto flex items-center justify-between px-8 relative py-3">
         {/* Left spacer for centering */}
         <div className="flex-1"></div>
@@ -160,7 +196,7 @@ export default function FitFolioNavbarDesktop({
               <button
                 ref={searchIconBtnRef}
                 onClick={handleSearchClick}
-                className={`rounded-xl px-1.5 py-1 text-[20px] font-medium text-white/85 outline-none transition hover:text-white 
+                className={`rounded-xl px-1.5 py-1 text-[20px] font-medium text-white/85 outline-none transition-all duration-300 hover:text-white 
                   ring-offset-2 ${isSearching ? "rotate-45" : ""}`}
                   aria-label="Search"
               >
