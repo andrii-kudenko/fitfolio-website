@@ -405,7 +405,14 @@ export default function FitFolioNavbarDesktop({
                         label="Profile"
                         onClick={() => {
                           setOpen(false);
-                          handleNavigate("/profile");
+                          if (loggedInUser && loggedInUser.name) {
+                            // If logged in, it will go to the profile page
+                            const slug = encodeURIComponent(loggedInUser.name);
+                            handleNavigate(`/profile/${slug}`);
+                          } else {
+                            // If not logged in, it will go to log in page
+                            handleNavigate("/login");
+                          }
                         }}
                       />
 

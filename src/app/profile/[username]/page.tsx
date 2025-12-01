@@ -1,21 +1,19 @@
-// testing comment
-// testing comment 2
-// testing comment 3
-
 "use client";
 
 import { useState } from "react";
+import { useParams } from "next/navigation";
 
 const tabs = ["Reviews", "Collections", "Tier-lists", "Following", "Followers"];
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Reviews");
-  const username = "kristoforik";
+  const params = useParams();
+  const username = params.username as string;
 
   return (
     <main className="min-h-screen bg-black text-white">
       <div className="mx-auto flex max-w-6xl flex-col px-4 py-8">
-        {/* HEADER / HERO */}
+        {/* HEADER */}
         <section className="relative mb-6 overflow-hidden rounded-3xl border border-slate-800">
           {/* Banner Image */}
           <div className="relative h-64 w-full md:h-80">
@@ -28,7 +26,7 @@ export default function ProfilePage() {
             <div className="absolute inset-0 bg-black/40" />
           </div>
 
-          {/* Profile info panel OVER the banner */}
+          {/* Profile info panel over the banner */}
           <div className="relative -mt-20 px-6 pb-6 md:px-10">
             <div className="flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
               {/* Avatar + name */}
@@ -100,8 +98,6 @@ export default function ProfilePage() {
   );
 }
 
-/* --- small components --- */
-
 type ProfileStatProps = {
   label: string;
   value: string;
@@ -116,7 +112,7 @@ function ProfileStat({ label, value }: ProfileStatProps) {
   );
 }
 
-/* ---------------- REVIEWS TAB ---------------- */
+/* ---------------- Review Tabs---------------- */
 
 const mockReviews = [
   {
@@ -222,7 +218,7 @@ function ReviewsTab() {
   );
 }
 
-/* ---------------- COLLECTIONS TAB ---------------- */
+/* ---------------- Collection Tab ---------------- */
 
 const mockCollections = [
   "Top Autumn Items",
@@ -260,7 +256,7 @@ function CollectionsTab() {
   );
 }
 
-/* ---------------- TIER LISTS TAB ---------------- */
+/* ---------------- Tier List Tabs---------------- */
 
 function TierListsTab() {
   return (
@@ -299,7 +295,7 @@ function TierListsTab() {
   );
 }
 
-/* ---------------- FOLLOWING / FOLLOWERS ---------------- */
+/* ---------------- Following / Followers ---------------- */
 
 const mockUsers = Array.from({ length: 9 }).map((_, i) => ({
   id: i + 1,
