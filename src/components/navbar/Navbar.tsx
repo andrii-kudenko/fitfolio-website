@@ -1,12 +1,14 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { Search, ChevronDown, ChevronUp, User2 } from "lucide-react";
 import SearchIcon from "./SearchIcon";
 import NavbarChevron from "./NavbarChevron";
 import Image from "next/image";
 import { searchItems, getItemTitle, type SearchItem } from "@/lib/search";
+import Link from "next/link";
+
 
 /**
  * FitFolio Navbar (Desktop)
@@ -46,6 +48,7 @@ export default function FitFolioNavbarDesktop({
   isSearching: isSearchingProp,
 }: NavbarDesktopProps) {
   const router = useRouter();
+  const pathname = usePathname();
   const [open, setOpen] = useState(false);
   // Internal state for search if not controlled by parent
   const [internalSearching, setInternalSearching] = useState(false);
@@ -59,6 +62,7 @@ export default function FitFolioNavbarDesktop({
   const searchIconBtnRef = useRef<HTMLButtonElement | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+  const [loggedInUser, setLoggedInUser] = useState<any>(null);
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -137,6 +141,18 @@ export default function FitFolioNavbarDesktop({
     }
   }, [isSearching]);
 
+  // Get logged in user from loca storage when the route changes
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      const data = localStorage.getItem("fitfolio_logged_in");
+      if (data) {
+        setLoggedInUser(JSON.parse(data));
+      } else {
+        setLoggedInUser(null);
+      }
+    }
+  }, [pathname]);
+
   const handleNavigate = (path: string) => {
     if (onNavigate) {
       onNavigate(path);
@@ -162,6 +178,38 @@ export default function FitFolioNavbarDesktop({
     }
     console.log(isSearching);
   };
+
+  const handleLoginClick = () => {
+    setOpen(false);
+    if (onLogin) {
+      onLogin();
+    } else {
+      handleNavigate("/login");
+    }
+  };
+
+  const handleSignupClick = () => {
+    setOpen(false);
+    if (onSignup) {
+      onSignup();
+    } else {
+      handleNavigate("/register");
+    }
+  };
+
+  const handleLogout = () => {
+    setOpen(false);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("fitfolio_logged_in");
+    }
+    setLoggedInUser(null);
+    if (onLogout) {
+      onLogout();
+    } else {
+      handleNavigate("/");
+    }
+  };
+
 
   return (
     <header className="sticky top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ">
@@ -338,7 +386,7 @@ export default function FitFolioNavbarDesktop({
               aria-haspopup="menu"
               className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white"
             >
-              <span>Account</span>
+              <span>{loggedInUser ? loggedInUser.name : "Account"}</span>
               {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
 
@@ -351,16 +399,49 @@ export default function FitFolioNavbarDesktop({
                 className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border-b-2 border-ff-cyan backdrop-blur shadow-xl"
               >
                 <div className="relative p-1">
-                  {isAuthenticated ? (
+                  {loggedInUser ? (
                     <>
-                      <MenuItem label="Collections" onClick={() => { setOpen(false); handleNavigate("/collections"); }} />
-                      <MenuItem label="Settings" onClick={() => { setOpen(false); handleNavigate("/settings"); }} />
-                      <MenuItem label="Log Out" onClick={() => { setOpen(false); onLogout?.(); }} destructive />
+                      <MenuItem
+                        label="Profile"
+                        onClick={() => {
+                          setOpen(false);
+                          if (loggedInUser && loggedInUser.name) {
+                            // If logged in, it will go to the profile page
+                            const slug = encodeURIComponent(loggedInUser.name);
+                            handleNavigate(`/profile/${slug}`);
+                          } else {
+                            // If not logged in, it will go to log in page
+                            handleNavigate("/login");
+                          }
+                        }}
+                      />
+
+                      <MenuItem
+                        label="Settings"
+                        onClick={() => {
+                          setOpen(false);
+                          handleNavigate("/settings");
+                        }}
+                      />
+
+                      <MenuItem
+                        label="Log Out"
+                        onClick={handleLogout}
+                        destructive
+                      />
                     </>
                   ) : (
                     <>
-                      <MenuItem label="Log In" onClick={() => { setOpen(false); onLogin?.(); }} />
-                      <MenuItem label="Sign Up" onClick={() => { setOpen(false); onSignup?.(); }} primary />
+                      <MenuItem
+                        label="Log In"
+                        onClick={handleLoginClick}
+                      />
+
+                      <MenuItem
+                        label="Sign Up"
+                        onClick={handleSignupClick}
+                        primary
+                      />
                     </>
                   )}
                 </div>
