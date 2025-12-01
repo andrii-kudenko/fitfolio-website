@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
 function getStoredUsers() {
@@ -72,6 +72,7 @@ export default function RegisterPage() {
   }
 
   return (
+    <Suspense fallback={<div>Loading...</div>}>
     <div className="min-h-screen flex flex-col items-center">
       <div className="mt-6 mb-4 text-2xl font-semibold text-white">
         Fi<span className="text-blue-400">Folio</span>
@@ -160,7 +161,8 @@ export default function RegisterPage() {
             Sign in instead
           </button>
         </p>
+        </div>
       </div>
-    </div>
+    </Suspense>
   );
 }
