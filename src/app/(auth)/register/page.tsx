@@ -19,7 +19,7 @@ function saveStoredUsers(users: any[]) {
   localStorage.setItem("fitfolio_users", JSON.stringify(users));
 }
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -72,7 +72,6 @@ export default function RegisterPage() {
   }
 
   return (
-    <Suspense fallback={<div>Loading...</div>}>
     <div className="min-h-screen flex flex-col items-center">
       <div className="mt-6 mb-4 text-2xl font-semibold text-white">
         Fi<span className="text-blue-400">Folio</span>
@@ -161,8 +160,15 @@ export default function RegisterPage() {
             Sign in instead
           </button>
         </p>
-        </div>
       </div>
+    </div>
+  );
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <RegisterForm />
     </Suspense>
   );
 }
