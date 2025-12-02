@@ -1,18 +1,18 @@
 import { api } from "@/shared/lib/api";
-import { Item, CreateItemDTO } from "../types/types";
+import { CreateItemDTO, ItemResponseDTO } from "../types/types";
 
 export const itemsApi = {
-    getAll: async (): Promise<Item[]> => {
+    getAll: async (): Promise<ItemResponseDTO[]> => {
       const { data } = await api.get("/items");
       return data;
     },
   
-    getById: async (id: string): Promise<Item> => {
+    getById: async (id: string): Promise<ItemResponseDTO> => {
       const { data } = await api.get(`/items/${id}`);
       return data;
     },
   
-    create: async (payload: CreateItemDTO): Promise<Item> => {
+    create: async (payload: CreateItemDTO): Promise<ItemResponseDTO> => {
       const { data } = await api.post("/items", payload);
       return data;
     },

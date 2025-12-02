@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
 import { itemsApi } from "../api/items.api";
-import { Item } from "../types/types";
+import { ItemResponseDTO } from "../types/types";
 
 export function useItems() {
-  const [items, setItems] = useState<Item[]>([]);
+  const [items, setItems] = useState<ItemResponseDTO[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -16,7 +16,7 @@ export function useItems() {
 }
 
 export function useItem(id: string) {
-  const [item, setItem] = useState<Item | null>(null);
+  const [item, setItem] = useState<ItemResponseDTO | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
