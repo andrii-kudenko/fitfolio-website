@@ -3,10 +3,10 @@
 import React, { useEffect, useRef, useState, useMemo } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { Search, ChevronDown, ChevronUp, User2 } from "lucide-react";
-import SearchIcon from "./SearchIcon";
-import NavbarChevron from "./NavbarChevron";
+import SearchIcon from "@/shared/components/navbar/SearchIcon";
+import NavbarChevron from "@/shared/components/navbar/NavbarChevron";
 import Image from "next/image";
-import { searchItems, getItemTitle, type SearchItem } from "@/lib/search";
+import { searchItems, getItemTitle, type SearchItem } from "@/shared/lib/search";
 import Link from "next/link";
 
 
@@ -278,8 +278,8 @@ export default function FitFolioNavbarDesktop({
                   </div>
 
                   {searchInput.trim() && (
-                    <div className="bg-[#55C1FF]/3 p-4 rounded-3xl w-full mt-4 flex flex-col gap-4 items-center justify-center ">
-                      <div className="bg-[#111729] w-full rounded-full px-6 py-3 overflow-hidden
+                    <div className="bg-white/6 p-4 rounded-3xl w-full mt-4 flex flex-col gap-2 items-center justify-center ">
+                      <div className="bg-black w-full rounded-full px-6 py-3 overflow-hidden
                       flex items-center justify-between">
                         <div className="flex rounded-full px-8 py-1 bg-white/6">
                           <span>Items {searchResults.length > 0 && `(${searchResults.length})`}</span>
@@ -297,7 +297,7 @@ export default function FitFolioNavbarDesktop({
                       <div className=" py-2 max-h-[500px] w-full flex flex-col gap-2 overflow-y-auto scrollbar-hide">
                         
                       {searchResults.length === 0 ? (
-                        <div className="bg-[#111729] w-full rounded-3xl px-6 py-6 text-center">
+                        <div className="bg-black w-full rounded-3xl px-6 py-6 text-center">
                           <p className="text-white/60 w-full">No items found. Try a different search.</p>
                         </div>
                       ) : (
@@ -309,8 +309,8 @@ export default function FitFolioNavbarDesktop({
                           return (
                             <div 
                               key={index}
-                              className="bg-[#111729] w-full flex items-center
-                              px-6 py-6 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
+                              className="bg-black w-full flex items-center
+                              px-3 py-3 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
                               onClick={() => {
                                 if (item.url && onNavigate) {
                                   // You might want to navigate to an item detail page instead
@@ -323,8 +323,8 @@ export default function FitFolioNavbarDesktop({
                                 <Image 
                                   src={imageUrl} 
                                   alt={title} 
-                                  width={100} 
-                                  height={100}
+                                  width={80} 
+                                  height={80}
                                   className="object-cover"
                                   onError={(e) => {
                                     // Fallback to default image if image fails to load
@@ -333,8 +333,8 @@ export default function FitFolioNavbarDesktop({
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[20px] text-white truncate">{title}</p>
-                                <span className="text-[16px] text-white/70">{price}</span>
+                                <p className="text-[20px] text-white truncate">{title}<span className="text-[16px] text-white/70"> ~{price}</span></p>
+                                
                                 {item.description && (
                                   <p className="text-[14px] text-white/50 mt-1 line-clamp-2">
                                     {item.description.substring(0, 100)}...
@@ -377,18 +377,31 @@ export default function FitFolioNavbarDesktop({
 
         {/* Right profile menu */}
         <div className="flex-1 flex justify-end">
-          {true ? (
+          {true ? ( // TODO: Change to isAuthenticated
           <div className="relative">
-            <button
-              ref={btnRef}
-              onClick={() => setOpen((v) => !v)}
-              aria-expanded={open}
-              aria-haspopup="menu"
-              className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white"
-            >
-              <span>{loggedInUser ? loggedInUser.name : "Account"}</span>
-              {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            {loggedInUser ? (
+              <button
+                ref={btnRef}
+                onClick={() => setOpen((v) => !v)}
+                aria-expanded={open}
+                aria-haspopup="menu"
+                className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white"
+              >
+                <span>{loggedInUser ? loggedInUser.name : "Account"}</span>
+                {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
+            ) : (
+              <button
+                ref={btnRef}
+                onClick={() => console.log("sign in clicked")}
+                aria-haspopup="menu"
+                className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white"
+              >
+                <span className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white">Sign In</span>
+            </button>
+            )
+            }
+            
 
             {/* Dropdown */}
             {open && (

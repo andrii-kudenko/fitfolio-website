@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import FitFolioNavbarDesktop from '@/components/navbar/Navbar';
+import FitFolioNavbarDesktop from '@/shared/components/navbar/Navbar';
 
 export default function NavbarWrapper({ isAuthenticated }: { isAuthenticated: boolean }) {
   const [isSearching, setIsSearching] = useState(false);
@@ -45,7 +45,7 @@ export default function NavbarWrapper({ isAuthenticated }: { isAuthenticated: bo
       
       {/* Overlay when searching */}
       {isSearching && (
-        <div className="fixed inset-0 bg-black/70 z-30" />
+        <div className="fixed inset-0 bg-black/90 z-30" />
       )}
     </>
   );

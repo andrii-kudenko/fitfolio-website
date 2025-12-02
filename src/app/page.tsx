@@ -1,17 +1,17 @@
 'use client';
 
-import FitFolioNavbarDesktop from "@/components/navbar/Navbar";
-import Banner from "@/components/ui/Banner";
+import FitFolioNavbarDesktop from "@/shared/components/navbar/Navbar";
+import Banner from "@/shared/components/banner/Banner";
 import ScrollableItemList from "@/features/items/components/ScrollableItemList";
 import Image from "next/image";
 import { useState } from "react";
-import { Item } from "@/features/items/lib/types";
+import { ItemResponseDTO } from "@/features/items/types/types";
 
-const recommendedItems: Item[] = [
+const recommendedItems: ItemResponseDTO[] = [
   {
     id: "a1b2c3d4-e5f6-1234-5678-abcdefabcdef",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "north-face-puffer",
     description: "Warm, popular puffer jacket for winter",
@@ -34,8 +34,8 @@ const recommendedItems: Item[] = [
   },
   {
     id: "b2c3d4e5-f6a1-2345-6789-bcdefabcdefa",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString()  ,
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "uniqlo-flannel-shirt",
     description: "Affordable, soft flannel. Easy everyday style.",
@@ -58,13 +58,13 @@ const recommendedItems: Item[] = [
   },
   {
     id: "c3d4e5f6-a1b2-3456-789a-cdefabcdefab",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "levi-501-original",
     description: "The iconic straight-leg jean, globally loved.",
     source_url: "https://levi.com/501",
-    sub_title: null,
+    sub_title: "",
     fit: "Straight",
     materials: "Cotton Denim",
     department: "Unisex",
@@ -82,8 +82,8 @@ const recommendedItems: Item[] = [
   },
   {
     id: "d4e5f6a1-b2c3-4567-89ab-defabcdefabc",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "nike-airforce-1",
     description: "Classic all-white sneaker for every outfit.",
@@ -106,8 +106,8 @@ const recommendedItems: Item[] = [
   },
   {
     id: "d4e5f6a1-b2c3-4567-89ab-defabcdefabw",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "nike-airforce-1",
     description: "Classic all-white sneaker for every outfit.",
@@ -130,8 +130,8 @@ const recommendedItems: Item[] = [
   },
   {
     id: "d4e5f6ad-b2c3-4567-89ab-defabcdefabw",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "nike-airforce-1",
     description: "Classic all-white sneaker for every outfit.",
@@ -154,8 +154,8 @@ const recommendedItems: Item[] = [
   },
   {
     id: "d4e5f6ad-b2c3-4567-9ab-defabcdefabw",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "nike-airforce-1",
     description: "Classic all-white sneaker for every outfit.",
@@ -178,8 +178,8 @@ const recommendedItems: Item[] = [
   },
   {
     id: "d4e5fad-b2c3-4567-89ab-defabcdefabw",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "nike-airforce-1",
     description: "Classic all-white sneaker for every outfit.",
@@ -202,8 +202,8 @@ const recommendedItems: Item[] = [
   },
   {
     id: "d4e5f6ad-b2cd-4567-89ab-defabcdefabw",
-    created_at: new Date(),
-    updated_at: new Date(),
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
     status: "active",
     slug: "nike-airforce-1",
     description: "Classic all-white sneaker for every outfit.",

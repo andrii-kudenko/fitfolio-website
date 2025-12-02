@@ -1,6 +1,6 @@
 import axios from "axios";
 
-const apiClient = axios.create({
+const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || "https://api.fitfolio.app",
     withCredentials: true, // send cookies if needed
     headers: {
@@ -9,7 +9,7 @@ const apiClient = axios.create({
   });
   
   // 🔐 Optional: attach JWT or session token automatically
-  apiClient.interceptors.request.use((config) => {
+  api.interceptors.request.use((config) => {
     if (typeof window !== "undefined") {
       const token = localStorage.getItem("access_token");
       if (token) config.headers.Authorization = `Bearer ${token}`;
@@ -18,7 +18,7 @@ const apiClient = axios.create({
   });
   
   // ⚠️ Optional: handle common API errors
-  apiClient.interceptors.response.use(
+  api.interceptors.response.use(
     (response) => response,
     (error) => {
       if (error.response?.status === 401) {
@@ -28,4 +28,4 @@ const apiClient = axios.create({
     }
   );
   
-  export { apiClient };
+  export { api };
