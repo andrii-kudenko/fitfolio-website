@@ -22,9 +22,9 @@ export interface Item {
   category_id?: string;
   image_url?: string;
   contributor_id?: string;
-  comment_count?: number;
-  view_count?: number;
-  like_count?: number;
+  comment_count: number;
+  view_count: number;
+  like_count: number;
   primary_color?: string;
   rating?: number;
   }

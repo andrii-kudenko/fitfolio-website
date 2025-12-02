@@ -2,11 +2,11 @@
 
 import Image from 'next/image';
 import { Star, Eye, MessageCircle } from 'lucide-react';
-import { Item } from '../lib/types';
+import { ItemResponseDTO } from '../types/types';
 import Link from 'next/link';
 
 interface ItemCardProps {
-  item: Item;
+  item: ItemResponseDTO;
 }
 
 function formatCount(count: number): string {
