@@ -14,7 +14,7 @@ async function loadItemsData(): Promise<any[]> {
     return itemsDataCache;
   }
   
-  const data = await import('@/mocks/all_items_transformed.json');
+  const data = await import('@/shared/mocks/all_items_transformed.json');
   itemsDataCache = data.default as any[];
   return itemsDataCache;
 }
