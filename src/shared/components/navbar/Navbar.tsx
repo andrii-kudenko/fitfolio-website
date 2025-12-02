@@ -278,7 +278,7 @@ export default function FitFolioNavbarDesktop({
                   </div>
 
                   {searchInput.trim() && (
-                    <div className="bg-white/4 p-4 rounded-3xl w-full mt-4 flex flex-col gap-2 items-center justify-center ">
+                    <div className="bg-white/6 p-4 rounded-3xl w-full mt-4 flex flex-col gap-2 items-center justify-center ">
                       <div className="bg-black w-full rounded-full px-6 py-3 overflow-hidden
                       flex items-center justify-between">
                         <div className="flex rounded-full px-8 py-1 bg-white/6">

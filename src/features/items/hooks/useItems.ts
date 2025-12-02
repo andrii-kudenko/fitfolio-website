@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { itemsApi } from "../api/items.api";
-import { Item } from "../types/item.types";
+import { Item } from "../types/types";
 
 export function useItems() {
   const [items, setItems] = useState<Item[]>([]);
