@@ -11,6 +11,14 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'www.nike.com',
       },
+      {
+        protocol: 'https',
+        hostname: 'assets.adidas.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'assets.adidas.com',
+      },
       // Add more domains as needed when you encounter them
     ],
   },

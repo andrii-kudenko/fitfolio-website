@@ -1,4 +1,4 @@
-import { api } from "@/lib/fetch";
+import { api } from "@/shared/lib/fetch";
 import { z } from "zod";
 // import { ItemSchema } from "@/features/items/lib/types";
 import { Item } from "@/features/items/lib/types";

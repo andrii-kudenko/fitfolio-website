@@ -1,7 +1,7 @@
 'use client';
 
-import FitFolioNavbarDesktop from "@/components/navbar/Navbar";
-import Banner from "@/components/ui/Banner";
+import FitFolioNavbarDesktop from "@/shared/components/navbar/Navbar";
+import Banner from "@/shared/components/banner/Banner";
 import ScrollableItemList from "@/features/items/components/ScrollableItemList";
 import Image from "next/image";
 import { useState } from "react";
