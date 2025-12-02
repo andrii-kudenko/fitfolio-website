@@ -46,7 +46,7 @@ export interface CreateItemDTO {
 }
 
 export interface ItemResponseDTO extends Item {
-  brand: Brand;
-  category: Category;
-  contributor: UserWithProfileDTO;
+  brand?: Brand;
+  category?: Category;
+  contributor?: UserWithProfileDTO;
 }

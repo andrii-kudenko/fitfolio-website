@@ -5,9 +5,9 @@ import Banner from "@/shared/components/banner/Banner";
 import ScrollableItemList from "@/features/items/components/ScrollableItemList";
 import Image from "next/image";
 import { useState } from "react";
-import { Item } from "@/features/items/types/types";
+import { ItemResponseDTO } from "@/features/items/types/types";
 
-const recommendedItems: Item[] = [
+const recommendedItems: ItemResponseDTO[] = [
   {
     id: "a1b2c3d4-e5f6-1234-5678-abcdefabcdef",
     created_at: new Date().toISOString(),
