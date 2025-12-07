@@ -1,5 +1,5 @@
-import { Brand } from "@/features/brands/types/brands.types";
-import { Category } from "@/features/categories/types/categories.types";
+import { BrandResponse } from "@/features/brands/types/brands.types";
+import { CategoryResponse } from "@/features/categories/types/categories.types";
 import { UserProfileResponse } from "@/features/users/types/users.types";
 
 export interface Item {
@@ -46,8 +46,8 @@ export interface ItemCreate {
 }
 
 export interface ItemResponse extends Item {
-  brand?: Brand;
-  category?: Category;
+  brand?: BrandResponse;
+  category?: CategoryResponse;
   contributor?: UserProfileResponse;
 }
 
