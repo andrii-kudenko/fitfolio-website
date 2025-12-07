@@ -1,8 +1,8 @@
 import { BrandResponse } from "@/features/brands/types/brands.types";
 import { CategoryResponse } from "@/features/categories/types/categories.types";
-import { UserProfileResponse } from "@/features/users/types/users.types";
+import { PageResult, UserProfileResponse } from "@/features/users/types/users.types";
 
-export interface Item {
+export interface ItemResponse {
   id: string;
   createdAt: string;
   updatedAt: string;
@@ -27,29 +27,38 @@ export interface Item {
   likeCount: number;
   primaryColor?: string;
   rating?: number;
-  }
-
-export interface ItemLike {
-  id: string;
-  userId: string;
-  itemId: string;
-  createdAt: string;
-}
-  
-export interface ItemCreate {
-  name: string;
-  brand: string;
-  price: number;
-  category: string;
-  imageUrl?: string;
-  description?: string;
 }
 
-export interface ItemResponse extends Item {
+export interface ItemResponseFull extends ItemResponse {
   brand?: BrandResponse;
   category?: CategoryResponse;
   contributor?: UserProfileResponse;
 }
+
+  export type ItemPage = PageResult<ItemResponse>;
+
+  // Create payload (mirror your ItemCreate DTO)
+  export interface ItemCreate {
+    name: string;
+    status: string;
+    slug?: string; // probably generated on backend, so optional here
+    description?: string | null;
+    sourceUrl?: string | null;
+    subTitle?: string | null;
+    fit?: string | null;
+    materials?: string | null;
+    department?: string | null;
+    collection?: string | null;
+    price?: number | null;
+    primaryColor?: string | null;
+    rating?: number | null;
+    brandId?: string | null;
+    categoryId?: string | null;
+    contributorId?: string | null;
+    imageUrl?: string | null;
+    details?: string[];
+  }
+  
 
 export interface PageMeta {
   size: number;
@@ -58,7 +67,16 @@ export interface PageMeta {
   totalPages: number;
 }
 
-export interface ItemPage {
-  content: Item[];
-  page: PageMeta;
+// ---- ItemLike mirrors ----
+
+export interface ItemLikeCreate {
+  userId: string;
+  itemId: string;
+}
+
+export interface ItemLikeResponse {
+  id: string;
+  userId: string;
+  itemId: string;
+  createdAt: string;
 }

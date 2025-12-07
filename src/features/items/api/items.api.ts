@@ -1,5 +1,5 @@
 import { api } from "@/shared/lib/api";
-import { ItemCreate, ItemResponse, ItemPage, PageMeta } from "../types/items.types";
+import { ItemCreate, ItemResponse, ItemPage, PageMeta, ItemLikeResponse, ItemLikeCreate } from "../types/items.types";
 
 export const itemsApi = {
   // getAll with pagination support
@@ -39,11 +39,21 @@ export const itemsApi = {
     return data;
   },
 
-  // this will 404 until you actually implement /api/items/compare in backend
-  compare: async (idA: string, idB: string): Promise<any> => {
-    const { data } = await api.get(`/items/compare`, {
-      params: { idA, idB },
-    });
+  // -----------------------------------------------------------------------
+  // Likes
+  // -----------------------------------------------------------------------
+
+  like: async (payload: ItemLikeCreate): Promise<ItemLikeResponse> => {
+    const { data } = await api.post<ItemLikeResponse>(
+      "/items/likes",
+      payload
+    );
     return data;
+  },
+
+  unlike: async (userId: string, itemId: string): Promise<void> => {
+    await api.delete("/items/likes", {
+      params: { userId, itemId },
+    });
   },
 };
