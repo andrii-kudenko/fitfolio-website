@@ -1,6 +1,6 @@
-import { Brand } from "@/features/brands/types/types";
-import { Category } from "@/features/categories/types/types";
-import { UserProfileResponse } from "@/features/user/types/users.types";
+import { Brand } from "@/features/brands/types/brands.types";
+import { Category } from "@/features/categories/types/categories.types";
+import { UserProfileResponse } from "@/features/users/types/users.types";
 
 export interface Item {
   id: string;
