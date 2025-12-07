@@ -5,7 +5,7 @@ import Banner from "@/shared/components/banner/Banner";
 import ScrollableItemList from "@/features/items/components/ScrollableItemList";
 import Image from "next/image";
 import { useState } from "react";
-import { ItemResponse } from "@/features/items/types/types";
+import { ItemResponse } from "@/features/items/types/items.types";
 
 const recommendedItems: ItemResponse[] = [
   {

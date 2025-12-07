@@ -1,6 +1,6 @@
 
 import ItemCard from "./ItemCard";  
-import { ItemResponse } from "../types/types";
+import { ItemResponse } from "../types/items.types";
 
 interface ItemListProps {
   items: ItemResponse[];

@@ -1,5 +1,5 @@
 import { api } from "@/shared/lib/api";
-import { ItemCreate, ItemResponse, ItemPage, PageMeta } from "../types/types";
+import { ItemCreate, ItemResponse, ItemPage, PageMeta } from "../types/items.types";
 
 export const itemsApi = {
   // getAll with pagination support

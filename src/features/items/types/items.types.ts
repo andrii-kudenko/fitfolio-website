@@ -1,6 +1,6 @@
 import { Brand } from "@/features/brands/types/types";
 import { Category } from "@/features/categories/types/types";
-import { UserWithProfileDTO } from "@/features/user/types/types";
+import { UserProfileResponse } from "@/features/user/types/users.types";
 
 export interface Item {
   id: string;
@@ -48,7 +48,7 @@ export interface ItemCreate {
 export interface ItemResponse extends Item {
   brand?: Brand;
   category?: Category;
-  contributor?: UserWithProfileDTO;
+  contributor?: UserProfileResponse;
 }
 
 export interface PageMeta {

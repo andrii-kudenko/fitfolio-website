@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { itemsApi } from "@/features/items/api/items.api";
-import type { ItemResponse } from "@/features/items/types/types";
+import type { ItemResponse } from "@/features/items/types/items.types";
 
 export default function ItemsPage() {
     const [items, setItems] = useState<ItemResponse[]>([]);

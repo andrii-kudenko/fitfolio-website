@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { Star, Eye, MessageCircle } from 'lucide-react';
-import { ItemResponse } from '../types/types';
+import { ItemResponse } from '../types/items.types';
 import Link from 'next/link';
 
 interface ItemCardProps {

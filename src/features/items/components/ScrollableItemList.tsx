@@ -2,7 +2,7 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ItemResponse } from '../types/types';
+import { ItemResponse } from '../types/items.types';
 import ItemCard from './ItemCard';
 
 interface ScrollableItemListProps {
