@@ -2,11 +2,11 @@
 
 import Image from 'next/image';
 import { Star, Eye, MessageCircle } from 'lucide-react';
-import { ItemResponseDTO } from '../types/types';
+import { ItemResponse } from '../types/types';
 import Link from 'next/link';
 
 interface ItemCardProps {
-  item: ItemResponseDTO;
+  item: ItemResponse;
 }
 
 function formatCount(count: number): string {
@@ -23,8 +23,8 @@ export default function ItemCard({ item }: ItemCardProps) {
         {/* Product Image */}
         <div className="relative w-full h-[160px] flex-shrink-0">
           <Image
-            src={item.image_url ? item.image_url : '/tnf-jacket.jpg'}
-            alt={item.title}
+            src={item.imageUrl ? item.imageUrl : '/tnf-jacket.jpg'}
+            alt={item.name}
             fill
             className="object-contain"
             sizes="208px"
@@ -35,7 +35,7 @@ export default function ItemCard({ item }: ItemCardProps) {
         <div className="flex-1 flex flex-col justify-between py-3">
           {/* Title */}
           <h3 className="text-white text-[16px] font-medium line-clamp-2 mb-3 text-center">
-            {item.title}
+            {item.name}
           </h3>
 
           {/* Engagement Metrics */}
@@ -44,7 +44,7 @@ export default function ItemCard({ item }: ItemCardProps) {
             <div className="flex flex-col items-center gap-1">
               <Star className="w-[26px] h-[26px] text-ff-cyan" strokeWidth={1.5} />
               <span className="text-white text-[14px]">
-                {formatCount(item.like_count)}
+                {formatCount(item.likeCount)}
               </span>
             </div>
 
@@ -52,7 +52,7 @@ export default function ItemCard({ item }: ItemCardProps) {
             <div className="flex flex-col items-center gap-1">
               <Eye className="w-[26px] h-[26px] text-ff-cyan" strokeWidth={1.5} />
               <span className="text-white text-[14px]">
-                {formatCount(item.view_count)}
+                {formatCount(item.viewCount)}
               </span>
             </div>
 
@@ -60,7 +60,7 @@ export default function ItemCard({ item }: ItemCardProps) {
             <div className="flex flex-col items-center gap-1">
               <MessageCircle className="w-[26px] h-[26px] text-ff-cyan" strokeWidth={1.5} />
               <span className="text-white text-[14px]">
-                {formatCount(item.comment_count)}
+                {formatCount(item.commentCount)}
               </span>
             </div>
           </div>

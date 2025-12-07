@@ -2,11 +2,11 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ItemResponseDTO } from '../types/types';
+import { ItemResponse } from '../types/types';
 import ItemCard from './ItemCard';
 
 interface ScrollableItemListProps {
-  items: ItemResponseDTO[];
+  items: ItemResponse[];
   title: string;
 }
 

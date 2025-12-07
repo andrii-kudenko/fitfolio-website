@@ -1,10 +1,30 @@
-// import { getItems } from ""
+'use client';
 
-import { api } from "@/shared/lib/fetch";
+import { useEffect, useState } from "react";
+import { itemsApi } from "@/features/items/api/items.api";
+import type { ItemResponse } from "@/features/items/types/types";
 
-export default async function ItemsPage() {
-    // return <div className="text-red-300">Hello</div>
-    const items = await api<any[]>("/items");
-    // return <div>Hello</div>
-    return <pre>{JSON.stringify(items, null, 2)}</pre>;
+export default function ItemsPage() {
+    const [items, setItems] = useState<ItemResponse[]>([]);
+    const [loading, setLoading] = useState(true);
+  
+    useEffect(() => {
+      itemsApi
+        .getAllItemsOnly()
+        .then(setItems)
+        .finally(() => setLoading(false));
+    }, []);
+  
+    if (loading) return <p>Loading…</p>;
+  
+    return (
+      <div className="grid gap-4 md:grid-cols-3">
+        {items.map((item) => (
+          <article key={item.id} className="border rounded-xl p-4">
+            <h2 className="font-semibold">{item.name}</h2>
+            {item.price != null && <p>${item.price}</p>}
+          </article>
+        ))}
+      </div>
+    );
 }   

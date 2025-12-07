@@ -1,32 +1,32 @@
 export interface Collection {
     id: string;
-    user_id: string;
+    userId: string;
     title: string;
     slug: string;
     description: string;
-    cover_image_url: string;
-    is_public: boolean;
-    is_ranked: boolean;
-    like_count: number;
-    comment_count: number;
-    view_count: number;
-    item_count: number;
-    created_at: string;
-    updated_at: string;
+    coverImageUrl: string;
+    isPublic: boolean;
+    isRanked: boolean;
+    likeCount: number;
+    commentCount: number;
+    viewCount: number;
+    itemCount: number;
+    createdAt: string;
+    updatedAt: string;
 }
 
 export interface CollectionLike {
     id: string;
-    user_id: string;
-    collection_id: string;
-    created_at: string;
+    userId: string;
+    collectionId: string;
+    createdAt: string;
 }
 
 export interface CollectionItem {
     id: string;
-    collection_id: string;
-    item_id: string;
+    collectionId: string;
+    itemId: string;
     rank: number;
-    created_at: string;
+    createdAt: string;
 }
 

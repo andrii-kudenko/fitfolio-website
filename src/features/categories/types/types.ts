@@ -1,9 +1,9 @@
 export interface Category {
     id: string;
-    parent_id: string | null;
+    parentId: string | null;
     name: string;
     slug: string;
-    sort_order: number;
-    is_active: boolean;
+    sortOrder: number;
+    isActive: boolean;
 }
 

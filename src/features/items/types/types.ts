@@ -4,39 +4,39 @@ import { UserWithProfileDTO } from "@/features/user/types/types";
 
 export interface Item {
   id: string;
-  created_at: string;
-  updated_at: string;
+  createdAt: string;
+  updatedAt: string;
   status: string;
   slug: string;
   description: string;
-  source_url: string;
-  sub_title?: string;
+  sourceUrl: string;
+  subTitle?: string;
   fit?: string;
   materials?: string;
   department?: string;
   collection?: string;
   price?: number;
   details?: string[];
-  title: string;
-  brand_id?: string;
-  category_id?: string;
-  image_url?: string;
-  contributor_id?: string;
-  comment_count: number;
-  view_count: number;
-  like_count: number;
-  primary_color?: string;
+  name: string;
+  brandId?: string;
+  categoryId?: string;
+  imageUrl?: string;
+  contributorId?: string;
+  commentCount: number;
+  viewCount: number;
+  likeCount: number;
+  primaryColor?: string;
   rating?: number;
   }
 
 export interface ItemLike {
   id: string;
-  user_id: string;
-  item_id: string;
-  created_at: string;
+  userId: string;
+  itemId: string;
+  createdAt: string;
 }
   
-export interface CreateItemDTO {
+export interface ItemCreate {
   name: string;
   brand: string;
   price: number;
@@ -45,8 +45,20 @@ export interface CreateItemDTO {
   description?: string;
 }
 
-export interface ItemResponseDTO extends Item {
+export interface ItemResponse extends Item {
   brand?: Brand;
   category?: Category;
   contributor?: UserWithProfileDTO;
+}
+
+export interface PageMeta {
+  size: number;
+  number: number;
+  totalElements: number;
+  totalPages: number;
+}
+
+export interface ItemPage {
+  content: Item[];
+  page: PageMeta;
 }

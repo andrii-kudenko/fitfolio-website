@@ -1,9 +1,9 @@
 
 import ItemCard from "./ItemCard";  
-import { ItemResponseDTO } from "../types/types";
+import { ItemResponse } from "../types/types";
 
 interface ItemListProps {
-  items: ItemResponseDTO[];
+  items: ItemResponse[];
 }
 
 export const ItemList = ({ items }: ItemListProps) => {
