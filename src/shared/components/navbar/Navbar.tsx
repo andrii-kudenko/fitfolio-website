@@ -63,6 +63,7 @@ export default function FitFolioNavbarDesktop({
   const [searchInput, setSearchInput] = useState("");
   const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
   const [loggedInUser, setLoggedInUser] = useState<any>(null);
+  const [displayName, setDisplayName] = useState<string>("");
 
   // Close profile menu on outside click
   useEffect(() => {
@@ -143,13 +144,38 @@ export default function FitFolioNavbarDesktop({
 
   // Get logged in user from loca storage when the route changes
   useEffect(() => {
-    if (typeof window !== "undefined") {
-      const data = localStorage.getItem("fitfolio_logged_in");
-      if (data) {
-        setLoggedInUser(JSON.parse(data));
-      } else {
-        setLoggedInUser(null);
+    if (typeof window === "undefined") return;
+  
+    const data = localStorage.getItem("fitfolio_logged_in");
+  
+    if (!data) {
+      setLoggedInUser(null);
+      setDisplayName("");
+      return;
+    }
+  
+    try {
+      const user = JSON.parse(data);
+  
+      // Build a simple display name
+      let name = "";
+      if (user.firstName || user.lastName) {
+        name = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+      } else if (user.displayName) {
+        name = user.displayName;
+      } else if (user.username) {
+        name = user.username;
+      } else if (user.email) {
+        name = user.email;
       }
+  
+      setLoggedInUser(user);
+      setDisplayName(name);
+    } catch {
+      // bad JSON – clear and reset
+      localStorage.removeItem("fitfolio_logged_in");
+      setLoggedInUser(null);
+      setDisplayName("");
     }
   }, [pathname]);
 
@@ -385,23 +411,25 @@ export default function FitFolioNavbarDesktop({
                 onClick={() => setOpen((v) => !v)}
                 aria-expanded={open}
                 aria-haspopup="menu"
-                className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white"
+                className="inline-flex items-center gap-1 px-1.5 py-1 text-[20px] font-medium text-white/85 transition ring-ff-cyan relative hover:text-white 
+             after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
+             after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100"
               >
-                <span>{loggedInUser ? loggedInUser.name : "Account"}</span>
+                <span>{loggedInUser ? loggedInUser.firstName : "Account"}</span>
                 {open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
             </button>
             ) : (
               <button
                 ref={btnRef}
-                onClick={() => console.log("sign in clicked")}
+                onClick={handleLoginClick}
                 aria-haspopup="menu"
-                className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white"
+                className="inline block px-1.5 py-1 text-[20px] font-medium text-white/85 transition ring-ff-cyan relative hover:text-white 
+                after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
+                after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100"
               >
                 <span className="inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[20px] font-medium text-white/85 outline-none transition hover:text-white">Sign In</span>
             </button>
-            )
-            }
-            
+            )} 
 
             {/* Dropdown */}
             {open && (
@@ -418,14 +446,7 @@ export default function FitFolioNavbarDesktop({
                         label="Profile"
                         onClick={() => {
                           setOpen(false);
-                          if (loggedInUser && loggedInUser.name) {
-                            // If logged in, it will go to the profile page
-                            const slug = encodeURIComponent(loggedInUser.name);
-                            handleNavigate(`/profile/${slug}`);
-                          } else {
-                            // If not logged in, it will go to log in page
-                            handleNavigate("/login");
-                          }
+                          handleNavigate("/profile");
                         }}
                       />
 
