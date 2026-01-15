@@ -3,44 +3,35 @@
 import { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-function getStoredUsers() {
-  if (typeof window === "undefined") return [];
-  const stored = localStorage.getItem("fitfolio_users");
-  if (!stored) return [];
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return [];
-  }
-}
-
-function saveStoredUsers(users: any[]) {
-  if (typeof window === "undefined") return;
-  localStorage.setItem("fitfolio_users", JSON.stringify(users));
-}
-
 function RegisterForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
-  const [name, setName] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [message, setMessage] = useState("");
+  const [loading, setLoading] = useState(false);
 
+  // pre-fill email from /register?email=...
   useEffect(() => {
     const emailFromQuery = searchParams.get("email") || "";
-    if (emailFromQuery) {
-      setEmail(emailFromQuery);
-    }
+    if (emailFromQuery) setEmail(emailFromQuery);
   }, [searchParams]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage("");
 
-    if (!email.trim() || !name.trim() || !password.trim() || !password2.trim()) {
+    if (
+      !email.trim() ||
+      !firstName.trim() ||
+      !lastName.trim() ||
+      !password.trim() ||
+      !password2.trim()
+    ) {
       setMessage("Please fill in all fields.");
       return;
     }
@@ -55,28 +46,43 @@ function RegisterForm() {
       return;
     }
 
-    const users = getStoredUsers();
-    const existing = users.find(
-      (u: any) => u.email.toLowerCase() === email.toLowerCase()
-    );
-    if (existing) {
-      setMessage("An account with this email already exists. Please sign in.");
-      return;
+    try {
+      setLoading(true);
+
+      const res = await fetch("http://localhost:8080/api/auth/register", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email,
+          password,
+          firstName,
+          lastName,
+        }),
+      });
+
+      if (!res.ok) {
+        const text = await res.text();
+        setMessage(text || "Account creation failed. Please try again.");
+        return;
+      }
+
+      // After account creation, redirect to login page
+      router.push("/login");
+    } catch (err) {
+      setMessage("Something went wrong. Please try again.");
+    } finally {
+      setLoading(false);
     }
-
-    users.push({ email, name, password }); // NOTE: plain text for demo only
-    saveStoredUsers(users);
-
-    // Goes back to login after account creation
-    router.push("/login");
   }
 
   return (
     <div className="min-h-screen flex flex-col items-center">
+      {/* logo */}
       <div className="mt-6 mb-4 text-2xl font-semibold text-white">
-        Fi<span className="text-blue-400">Folio</span>
+        <span className="text-blue-400">FitFolio</span>
       </div>
 
+      {/* form box */}
       <div className="w-full max-w-md bg-[#040707] border border-gray-700 rounded-md p-6">
         <h1 className="text-2xl font-semibold mb-4 text-white">
           Create account
@@ -90,9 +96,7 @@ function RegisterForm() {
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-white">
-              Email
-            </label>
+            <label className="text-sm font-bold text-white">Enter email</label>
             <input
               type="email"
               className="border border-gray-500 rounded-sm px-2 py-1 text-sm bg-black text-white"
@@ -103,14 +107,22 @@ function RegisterForm() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-white">
-              Your name
-            </label>
+            <label className="text-sm font-bold text-white">First name</label>
             <input
               className="border border-gray-500 rounded-sm px-2 py-1 text-sm bg-black text-white"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="First and last name"
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              placeholder="First name"
+            />
+          </div>
+
+          <div className="flex flex-col gap-1">
+            <label className="text-sm font-bold text-white">Last name</label>
+            <input
+              className="border border-gray-500 rounded-sm px-2 py-1 text-sm bg-black text-white"
+              value={lastName}
+              onChange={(e) => setLastName(e.target.value)}
+              placeholder="Last name"
             />
           </div>
 
@@ -140,26 +152,28 @@ function RegisterForm() {
 
           <button
             type="submit"
-            className="w-full mt-2 py-2 text-sm font-medium border border-yellow-500 rounded-sm bg-yellow-400 text-black hover:bg-yellow-300"
+            disabled={loading}
+            className="w-full mt-2 py-2 text-sm font-medium rounded-sm bg-[#1e90ff] text-white hover:bg-[#1879d9] disabled:opacity-60"
           >
-            Create account
+            {loading ? "Verifying Email..." : "Verify Email"}
           </button>
         </form>
 
         <p className="mt-4 text-xs text-gray-400">
-          By creating an account, you agree to FitFolio&apos;s Terms of Use and Privacy Notice.
+          By creating an account, you agree to FitFolio&apos;s Terms of Use and
+          Privacy Notice.
         </p>
 
-        <p className="mt-4 text-sm text-gray-300">
-          Already a customer?{" "}
+        <div className="mt-2 text-xs text-gray-400">
+          Already a user?{" "}
           <button
             type="button"
             onClick={() => router.push("/login")}
-            className="text-blue-400 underline"
+            className="text-blue-400 hover:underline"
           >
             Sign in instead
           </button>
-        </p>
+        </div>
       </div>
     </div>
   );
