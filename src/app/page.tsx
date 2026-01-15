@@ -4,8 +4,9 @@ import FitFolioNavbarDesktop from "@/shared/components/navbar/Navbar";
 import Banner from "@/shared/components/banner/Banner";
 import ScrollableItemList from "@/features/items/components/ScrollableItemList";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { ItemResponse } from "@/features/items/types/items.types";
+import { itemsApi } from "@/features/items/api/items.api";
 
 const recommendedItems: ItemResponse[] = [
   {
@@ -226,8 +227,17 @@ const recommendedItems: ItemResponse[] = [
   }
 ];
 
+
+
 export default function Home() {
 
+
+  useEffect(() => {
+    itemsApi.getAll().then((data) => {
+      console.log(data.content);
+    });
+  }, []);
+  
   return (
     <>
       {/* <FitFolioNavbarDesktop
