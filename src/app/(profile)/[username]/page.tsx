@@ -11,7 +11,7 @@ export default function ProfilePage() {
   const username = params.username as string;
 
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-ff-black text-white">
       <div className="mx-auto flex max-w-6xl flex-col px-4 py-8">
         {/* HEADER */}
         <section className="relative mb-6 overflow-hidden rounded-3xl border border-slate-800">
