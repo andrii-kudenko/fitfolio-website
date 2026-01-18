@@ -244,6 +244,58 @@ export default function FitFolioNavbarDesktop({
     }
   };
 
+  const handleProfileClick = async () => {
+    setOpen(false);
+    
+    if (!loggedInUser?.id) {
+      // No user logged in, shouldn't happen but handle gracefully
+      return;
+    }
+
+    // Check if profile is stored locally first
+    if (typeof window !== "undefined") {
+      const profileData = localStorage.getItem("fitfolio_user_profile");
+      
+      if (profileData) {
+        try {
+          const profile = JSON.parse(profileData);
+          if (profile.username) {
+            handleNavigate(`/${profile.username}`);
+            return;
+          }
+        } catch (err) {
+          // Invalid data, fetch from API
+          console.error("Invalid profile data in localStorage:", err);
+        }
+      }
+    }
+
+    // Profile not in localStorage, fetch from API
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/users/${loggedInUser.id}/profile`
+      );
+
+      if (!res.ok) {
+        console.error("Failed to fetch profile");
+        return;
+      }
+
+      const profile = await res.json();
+      const username = profile.username;
+
+      if (username) {
+        // Store profile for future use
+        if (typeof window !== "undefined") {
+          localStorage.setItem("fitfolio_user_profile", JSON.stringify(profile));
+        }
+        handleNavigate(`/${username}`);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
 
   return (
     <header className="sticky top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ">
@@ -445,10 +497,7 @@ export default function FitFolioNavbarDesktop({
                     <>
                       <MenuItem
                         label="Profile"
-                        onClick={() => {
-                          setOpen(false);
-                          handleNavigate("/profile");
-                        }}
+                        onClick={handleProfileClick}
                       />
 
                       <MenuItem

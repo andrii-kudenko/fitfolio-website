@@ -67,7 +67,7 @@ export default function OnboardingPage() {
           method: "PUT",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            username: username.trim(),
+            username: username.trim().toLowerCase(),
             bio: bio.trim() || null,
             avatarUrl: avatarUrl.trim() || null,
           }),
@@ -82,12 +82,16 @@ export default function OnboardingPage() {
         return;
       }
 
+      const profile = await res.json();
+
       // Profile created successfully - log the user in
       if (typeof window !== "undefined") {
         // Remove pending login
         localStorage.removeItem("fitfolio_pending_login");
         // Set logged in user
         localStorage.setItem("fitfolio_logged_in", JSON.stringify(user));
+        // Store profile to avoid API calls later
+        localStorage.setItem("fitfolio_user_profile", JSON.stringify(profile));
       }
 
       // Redirect to home
