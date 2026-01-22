@@ -15,18 +15,20 @@ function RegisterForm() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // pre-fill email from /register?email=...
+  // Normalize email from query params
   useEffect(() => {
-    const emailFromQuery = searchParams.get("email") || "";
+    const emailFromQuery = (searchParams.get("email") || "").trim().toLowerCase();
     if (emailFromQuery) setEmail(emailFromQuery);
   }, [searchParams]);
-
+  
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage("");
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     if (
-      !email.trim() ||
+      !normalizedEmail ||
       !firstName.trim() ||
       !lastName.trim() ||
       !password.trim() ||
@@ -53,10 +55,10 @@ function RegisterForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          email,
+          email: normalizedEmail,
           password,
-          firstName,
-          lastName,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
         }),
       });
 
@@ -66,7 +68,9 @@ function RegisterForm() {
         return;
       }
 
-      // After account creation, redirect to login page
+      // Optional: keep state consistent for UI
+      setEmail(normalizedEmail);
+
       router.push("/login");
     } catch (err) {
       setMessage("Something went wrong. Please try again.");
@@ -74,11 +78,12 @@ function RegisterForm() {
       setLoading(false);
     }
   }
+  
 
   return (
     <div className="min-h-screen flex flex-col items-center">
       {/* logo */}
-      <div className="mt-6 mb-4 text-2xl font-semibold text-white">
+      <div className="mt-10 mb-6 text-3xl font-semibold text-white">
         <span className="text-blue-400">FitFolio</span>
       </div>
 

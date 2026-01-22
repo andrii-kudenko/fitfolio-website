@@ -446,7 +446,7 @@ export default function FitFolioNavbarDesktop({
                         label="Profile"
                         onClick={() => {
                           setOpen(false);
-                          handleNavigate("/profile");
+                          handleNavigate(`/profile/${loggedInUser?.id}`);
                         }}
                       />
 

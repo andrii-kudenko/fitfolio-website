@@ -1,14 +1,35 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 
 const tabs = ["Reviews", "Collections", "Tier-lists", "Following", "Followers"];
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Reviews");
+  const [displayName, setDisplayName] = useState("");
   const params = useParams();
   const username = params.username as string;
+
+  useEffect(() => {
+    const data = localStorage.getItem("fitfolio_logged_in");
+    if (!data) return;
+
+    try {
+      const user = JSON.parse(data);
+
+      let name = "";
+      if (user.firstName || user.lastName) {
+        name = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
+      } else if (user.username) {
+        name = user.username;
+      } else if (user.email) {
+        name = user.email;
+      }
+
+      setDisplayName(name);
+    } catch {}
+  }, []);
 
   return (
     <main className="min-h-screen bg-black text-white">
@@ -41,7 +62,9 @@ export default function ProfilePage() {
 
                 <div>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-semibold">{username}</h1>
+                    <h1 className="text-3xl font-semibold">
+                      {displayName || "Profile"}
+                    </h1>
                     <button className="rounded-full bg-sky-500 px-4 py-1 text-sm font-medium">
                       Follow
                     </button>
