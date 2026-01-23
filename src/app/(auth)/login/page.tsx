@@ -84,9 +84,45 @@ export default function LoginPage() {
 
       const user = await res.json();
 
-      // Temporary login for now (store user)
+      // Check if user has a profile
+      const profileCheckRes = await fetch(
+        `http://localhost:8080/api/users/${user.id}/profile/exists`
+      );
+
+      if (!profileCheckRes.ok) {
+        setMessage("Failed to check profile. Please try again.");
+        return;
+      }
+
+      const hasProfile: boolean = await profileCheckRes.json();
+
+      if (!hasProfile) {
+        // User doesn't have a profile - redirect to onboarding
+        // Store user data temporarily so we can use it in onboarding
+        if (typeof window !== "undefined") {
+          localStorage.setItem("fitfolio_pending_login", JSON.stringify(user));
+        }
+        router.push("/onboarding");
+        return;
+      }
+
+      // User has profile - fetch and store it, then proceed with login
       if (typeof window !== "undefined") {
         localStorage.setItem("fitfolio_logged_in", JSON.stringify(user));
+
+        // Fetch and store profile to avoid API calls later
+        try {
+          const profileRes = await fetch(
+            `http://localhost:8080/api/users/${user.id}/profile`
+          );
+          if (profileRes.ok) {
+            const profile = await profileRes.json();
+            localStorage.setItem("fitfolio_user_profile", JSON.stringify(profile));
+          }
+        } catch (err) {
+          // If profile fetch fails, continue with login anyway
+          console.error("Failed to fetch profile:", err);
+        }
       }
 
       router.push("/");

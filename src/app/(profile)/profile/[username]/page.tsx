@@ -2,37 +2,104 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import type { UserProfileResponse } from "@/features/users/types/users.types";
+
+interface LoggedInUser {
+  id: string;
+  email: string;
+  firstName: string;
+  lastName: string;
+}
 
 const tabs = ["Reviews", "Collections", "Tier-lists", "Following", "Followers"];
 
 export default function ProfilePage() {
   const [activeTab, setActiveTab] = useState("Reviews");
-  const [displayName, setDisplayName] = useState("");
+  const [profile, setProfile] = useState<UserProfileResponse | null>(null);
+  const [loggedInUser, setLoggedInUser] = useState<LoggedInUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  
   const params = useParams();
   const username = params.username as string;
 
+  // Check if viewing own profile
+  const isOwnProfile = profile && loggedInUser && profile.userId === loggedInUser.id;
+
+  // Load logged-in user from localStorage
   useEffect(() => {
-    const data = localStorage.getItem("fitfolio_logged_in");
-    if (!data) return;
-
-    try {
-      const user = JSON.parse(data);
-
-      let name = "";
-      if (user.firstName || user.lastName) {
-        name = `${user.firstName ?? ""} ${user.lastName ?? ""}`.trim();
-      } else if (user.username) {
-        name = user.username;
-      } else if (user.email) {
-        name = user.email;
+    if (typeof window !== "undefined") {
+      const data = localStorage.getItem("fitfolio_logged_in");
+      if (data) {
+        try {
+          const user = JSON.parse(data);
+          setLoggedInUser(user);
+        } catch {
+          // Invalid data, ignore
+        }
       }
-
-      setDisplayName(name);
-    } catch {}
+    }
   }, []);
 
+  // Fetch profile data
+  useEffect(() => {
+    async function fetchProfile() {
+      try {
+        setLoading(true);
+        setError(null);
+
+        // Normalize username to lowercase for case-insensitive lookup
+        const normalizedUsername = username.toLowerCase();
+
+        const res = await fetch(
+          `http://localhost:8080/api/users/by-username/${encodeURIComponent(normalizedUsername)}/profile`
+        );
+
+        if (!res.ok) {
+          if (res.status === 404) {
+            setError("Profile not found");
+          } else {
+            setError("Failed to load profile");
+          }
+          return;
+        }
+
+        const profileData: UserProfileResponse = await res.json();
+        setProfile(profileData);
+      } catch (err) {
+        setError("Something went wrong. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (username) {
+      fetchProfile();
+    }
+  }, [username]);
+
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-ff-black text-white">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-8">
+          <div className="text-slate-400">Loading profile...</div>
+        </div>
+      </main>
+    );
+  }
+
+  if (error || !profile) {
+    return (
+      <main className="min-h-screen bg-ff-black text-white">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-8">
+          <div className="text-red-400">{error || "Profile not found"}</div>
+        </div>
+      </main>
+    );
+  }
+
   return (
-    <main className="min-h-screen bg-black text-white">
+    <main className="min-h-screen bg-ff-black text-white">
       <div className="mx-auto flex max-w-6xl flex-col px-4 py-8">
         {/* HEADER */}
         <section className="relative mb-6 overflow-hidden rounded-3xl border border-slate-800">
@@ -54,27 +121,36 @@ export default function ProfilePage() {
               <div className="flex items-end gap-4">
                 <div className="relative h-28 w-28 shrink-0 overflow-hidden rounded-full border-4 border-black bg-slate-700">
                   <img
-                    src="/face.jpg"
-                    alt={username}
+                    src={profile.avatarUrl || "/face.jpg"}
+                    alt={profile.username}
                     className="h-full w-full object-cover"
                   />
                 </div>
 
                 <div>
                   <div className="flex items-center gap-3">
-                    <h1 className="text-3xl font-semibold">
-                      {displayName || "Profile"}
-                    </h1>
-                    <button className="rounded-full bg-sky-500 px-4 py-1 text-sm font-medium">
-                      Follow
-                    </button>
-                    <span className="text-xl text-slate-400">⋯</span>
+                    <h1 className="text-2xl font-semibold">@{profile.username}</h1>
+                    {isOwnProfile ? (
+                      <>
+                        <button className="rounded-full bg-sky-500 px-4 py-1 text-sm font-medium hover:bg-sky-400">
+                          Edit Profile
+                        </button>
+                        <button className="rounded-full bg-slate-700 px-4 py-1 text-sm font-medium hover:bg-slate-600">
+                          Create List
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button className="rounded-full bg-ff-cyan px-4 py-1 text-sm font-medium hover:bg-sky-400">
+                          Follow
+                        </button>
+                        <span className="text-xl text-slate-400">⋯</span>
+                      </>
+                    )}
                   </div>
 
                   <p className="mt-2 max-w-xl text-sm text-slate-200">
-                    BIO. Hello my name is Andy, I am a big fan of fashion — and I really
-                    like to try and review new stuff, so subscribe to me and let me share
-                    what I know about fashion with you!
+                    {profile.bio || "No bio available"}
                   </p>
                 </div>
               </div>
@@ -82,10 +158,10 @@ export default function ProfilePage() {
               {/* Stats row */}
               <div className="grid grid-cols-3 gap-3 text-center text-xs md:grid-cols-5">
                 <ProfileStat label="ITEMS/REVIEWS" value="315" />
-                <ProfileStat label="COLLECTIONS" value="4" />
-                <ProfileStat label="TIER LISTS" value="3" />
-                <ProfileStat label="FOLLOWING" value="182" />
-                <ProfileStat label="FOLLOWERS" value="2369" />
+                <ProfileStat label="COLLECTIONS" value={profile.collectionsCount.toString()} />
+                <ProfileStat label="TIER LISTS" value={profile.tierListsCount.toString()} />
+                <ProfileStat label="FOLLOWING" value={profile.followingCount.toString()} />
+                <ProfileStat label="FOLLOWERS" value={profile.followersCount.toString()} />
               </div>
             </div>
 

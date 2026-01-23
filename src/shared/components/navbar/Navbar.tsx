@@ -6,7 +6,8 @@ import { Search, ChevronDown, ChevronUp, User2 } from "lucide-react";
 import SearchIcon from "@/shared/components/navbar/SearchIcon";
 import NavbarChevron from "@/shared/components/navbar/NavbarChevron";
 import Image from "next/image";
-import { searchItems, getItemTitle, type SearchItem } from "@/shared/lib/search";
+import { searchApi } from "@/features/search/api/search.api";
+import { ItemSearchResult } from "@/features/search/types/search.types";
 import Link from "next/link";
 
 
@@ -61,7 +62,7 @@ export default function FitFolioNavbarDesktop({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const searchIconBtnRef = useRef<HTMLButtonElement | null>(null);
   const [searchInput, setSearchInput] = useState("");
-  const [searchResults, setSearchResults] = useState<SearchItem[]>([]);
+  const [searchResults, setSearchResults] = useState<ItemSearchResult[]>([]);
   const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -121,11 +122,18 @@ export default function FitFolioNavbarDesktop({
     let isCancelled = false;
     
     if (searchInput.trim()) {
-      searchItems(searchInput, 10).then(results => {
-        if (!isCancelled) {
-          setSearchResults(results);
-        }
-      });
+      searchApi.search({ query: searchInput, limit: 10 })
+        .then(results => {
+          if (!isCancelled) {
+            setSearchResults(results);
+          }
+        })
+        .catch(error => {
+          console.error("Search error:", error);
+          if (!isCancelled) {
+            setSearchResults([]);
+          }
+        });
     } else {
       setSearchResults([]);
     }
@@ -236,6 +244,58 @@ export default function FitFolioNavbarDesktop({
     }
   };
 
+  const handleProfileClick = async () => {
+    setOpen(false);
+    
+    if (!loggedInUser?.id) {
+      // No user logged in, shouldn't happen but handle gracefully
+      return;
+    }
+
+    // Check if profile is stored locally first
+    if (typeof window !== "undefined") {
+      const profileData = localStorage.getItem("fitfolio_user_profile");
+      
+      if (profileData) {
+        try {
+          const profile = JSON.parse(profileData);
+          if (profile.username) {
+            handleNavigate(`/${profile.username}`);
+            return;
+          }
+        } catch (err) {
+          // Invalid data, fetch from API
+          console.error("Invalid profile data in localStorage:", err);
+        }
+      }
+    }
+
+    // Profile not in localStorage, fetch from API
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/users/${loggedInUser.id}/profile`
+      );
+
+      if (!res.ok) {
+        console.error("Failed to fetch profile");
+        return;
+      }
+
+      const profile = await res.json();
+      const username = profile.username;
+
+      if (username) {
+        // Store profile for future use
+        if (typeof window !== "undefined") {
+          localStorage.setItem("fitfolio_user_profile", JSON.stringify(profile));
+        }
+        handleNavigate(`/${username}`);
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    }
+  };
+
 
   return (
     <header className="sticky top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ">
@@ -327,28 +387,21 @@ export default function FitFolioNavbarDesktop({
                           <p className="text-white/60 w-full">No items found. Try a different search.</p>
                         </div>
                       ) : (
-                        searchResults.map((item, index) => {
-                          const title = getItemTitle(item);
-                          const imageUrl = item.image || '/nike-shoes.jpg';
-                          const price = item.price || 'Price not available';
+                        searchResults.map((item) => {
+                          const imageUrl = item.imageUrl || '/nike-shoes.jpg';
+                          const price = item.price ? `$${item.price.toFixed(2)}` : 'Price not available';
                           
                           return (
-                            <div 
-                              key={index}
+                            <Link
+                              key={item.id}
+                              href={`/items/${item.slug}`}
                               className="bg-black w-full flex items-center
                               px-3 py-3 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
-                              onClick={() => {
-                                if (item.url && onNavigate) {
-                                  // You might want to navigate to an item detail page instead
-                                  // onNavigate(`/items/${item.slug || item.id}`);
-                                  window.open(item.url, '_blank');
-                                }
-                              }}
                             >
                               <div className="rounded-xl bg-white/6 overflow-hidden flex-shrink-0">
                                 <Image 
                                   src={imageUrl} 
-                                  alt={title} 
+                                  alt={item.name} 
                                   width={80} 
                                   height={80}
                                   className="object-cover"
@@ -359,7 +412,7 @@ export default function FitFolioNavbarDesktop({
                                 />
                               </div>
                               <div className="flex-1 min-w-0">
-                                <p className="text-[20px] text-white truncate">{title}<span className="text-[16px] text-white/70"> ~{price}</span></p>
+                                <p className="text-[20px] text-white truncate">{item.name}<span className="text-[16px] text-white/70"> ~{price}</span></p>
                                 
                                 {item.description && (
                                   <p className="text-[14px] text-white/50 mt-1 line-clamp-2">
@@ -367,7 +420,7 @@ export default function FitFolioNavbarDesktop({
                                   </p>
                                 )}
                               </div>
-                            </div>
+                            </Link>
                           );
                         })
                       )}
@@ -437,17 +490,14 @@ export default function FitFolioNavbarDesktop({
                 ref={menuRef}
                 role="menu"
                 aria-label="Profile menu"
-                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border-b-2 border-ff-cyan backdrop-blur shadow-xl"
+                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border-b-2 border-ff-cyan bg-ff-black/80 shadow-xl"
               >
                 <div className="relative p-1">
                   {loggedInUser ? (
                     <>
                       <MenuItem
                         label="Profile"
-                        onClick={() => {
-                          setOpen(false);
-                          handleNavigate(`/profile/${loggedInUser?.id}`);
-                        }}
+                        onClick={handleProfileClick}
                       />
 
                       <MenuItem
