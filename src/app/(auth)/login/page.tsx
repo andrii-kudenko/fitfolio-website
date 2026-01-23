@@ -19,16 +19,20 @@ export default function LoginPage() {
     e.preventDefault();
     setMessage("");
 
-    if (email.trim() === "") {
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!normalizedEmail) {
       setMessage("Please enter your email.");
       return;
     }
+
+    setEmail(normalizedEmail);
 
     try {
       setLoadingEmail(true);
 
       const res = await fetch(
-        `http://localhost:8080/api/auth/email-exists?email=${encodeURIComponent(email)}`
+        `http://localhost:8080/api/auth/email-exists?email=${encodeURIComponent(normalizedEmail)}`
       );
 
       // If backend works and sends true/false as JSON
