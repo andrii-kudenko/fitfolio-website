@@ -1,11 +1,10 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 
-function RegisterForm() {
+export default function RegisterPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [email, setEmail] = useState("");
   const [firstName, setFirstName] = useState("");
@@ -15,12 +14,6 @@ function RegisterForm() {
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Normalize email from query params
-  useEffect(() => {
-    const emailFromQuery = (searchParams.get("email") || "").trim().toLowerCase();
-    if (emailFromQuery) setEmail(emailFromQuery);
-  }, [searchParams]);
-  
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setMessage("");
@@ -72,13 +65,12 @@ function RegisterForm() {
       setEmail(normalizedEmail);
 
       router.push("/login");
-    } catch (err) {
+    } catch {
       setMessage("Something went wrong. Please try again.");
     } finally {
       setLoading(false);
     }
   }
-  
 
   return (
     <div className="min-h-screen flex flex-col items-center">
@@ -93,11 +85,7 @@ function RegisterForm() {
           Create account
         </h1>
 
-        {message && (
-          <p className="mb-3 text-sm text-red-400">
-            {message}
-          </p>
-        )}
+        {message && <p className="mb-3 text-sm text-red-400">{message}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex flex-col gap-1">
@@ -181,13 +169,5 @@ function RegisterForm() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function RegisterPage() {
-  return (
-    <Suspense fallback={<div>Loading...</div>}>
-      <RegisterForm />
-    </Suspense>
   );
 }

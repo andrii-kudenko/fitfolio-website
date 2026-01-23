@@ -1,18 +1,23 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 export default function NewPasswordPage() {
   const router = useRouter();
-  const searchParams = useSearchParams();
-
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [password2, setPassword2] = useState("");
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
-  const email = (searchParams.get("email") || "").trim().toLowerCase();
+  // Read email from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("fitfolio_reset_email");
+    if (saved) {
+      setEmail(saved.trim().toLowerCase());
+    }
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -80,17 +85,11 @@ export default function NewPasswordPage() {
           We&apos;ll ask for this password whenever you sign in.
         </p>
 
-        {message && (
-          <p className="mb-3 text-sm text-red-400">
-            {message}
-          </p>
-        )}
+        {message && <p className="mb-3 text-sm text-red-400">{message}</p>}
 
         <form onSubmit={handleSubmit} className="space-y-3">
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-white">
-              New password
-            </label>
+            <label className="text-sm font-bold text-white">New password</label>
             <input
               type="password"
               className="border border-gray-500 rounded-sm px-2 py-1 text-sm bg-black text-white"
@@ -100,9 +99,7 @@ export default function NewPasswordPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-white">
-              Password again
-            </label>
+            <label className="text-sm font-bold text-white">Password again</label>
             <input
               type="password"
               className="border border-gray-500 rounded-sm px-2 py-1 text-sm bg-black text-white"
