@@ -3,6 +3,8 @@
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import type { UserProfileResponse } from "@/features/users/types/users.types";
+import { Plus } from "lucide-react";
+import Link from "next/link";
 
 interface LoggedInUser {
   id: string;
@@ -351,6 +353,14 @@ function CollectionsTab() {
           </button>
         </div>
       ))}
+      <Link
+          href="/collections/new"
+          className="group flex flex-col rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 p-4 items-center justify-center cursor-pointer
+           hover:border-ff-cyan hover:border-solid transition-all duration-300"
+        >          
+          <Plus className="size-[140px] text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300" strokeWidth={0.5} />
+          <h3 className="font-medium text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300">Create new Collection</h3>
+      </Link>
     </div>
   );
 }
@@ -390,6 +400,14 @@ function TierListsTab() {
           </button>
         </div>
       ))}
+      <div
+          key={2}
+          className="group flex flex-col rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 p-4 items-center justify-center cursor-pointer
+           hover:border-ff-cyan group-hover:border-solid transition-all duration-300"
+        >
+          <Plus className="size-[140px] text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300" strokeWidth={0.5} />
+          <h3 className="font-medium text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300">Create new Tier-list</h3>
+      </div>
     </div>
   );
 }

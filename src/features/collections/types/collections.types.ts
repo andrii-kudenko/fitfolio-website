@@ -2,12 +2,18 @@ import type { PageResult } from "@/shared/types/pagination";
 
 // ----- Collections -----
 
+export interface CollectionItemWithRank {
+  itemId: string;
+  rank: number; // Always present, never null
+}
+
 export interface CollectionCreate {
   title: string;
   description?: string | null;
   coverImageUrl?: string | null;
   isPublic?: boolean | null;
   isRanked?: boolean | null;
+  items?: CollectionItemWithRank[];
 }
 
 export interface CollectionResponse {
