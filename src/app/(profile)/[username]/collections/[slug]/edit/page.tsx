@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Star, Eye, MessageCircle, X, Trash2, GripVertical } from 'lucide-react';
 import { searchApi } from '@/features/search/api/search.api';
 import { ItemSearchResult } from '@/features/search/types/search.types';
 import { collectionsApi } from '@/features/collections/api/collections.api';
-import { usersApi } from '@/features/users/api/users.api';
+import { itemsApi } from '@/features/items/api/items.api';
 import {
   DndContext,
   closestCenter,
@@ -29,12 +29,17 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 
-export default function CreateCollectionPage() {
+export default function EditCollectionPage() {
+  const params = useParams();
   const router = useRouter();
+  const username = params.username as string;
+  const slug = params.slug as string;
   const searchRef = useRef<HTMLDivElement>(null);
+
+  const [loading, setLoading] = useState(true);
   const [formData, setFormData] = useState({
     title: '',
-    isPublic: true, // boolean: true for public, false for private
+    isPublic: true,
     isRanked: false,
     description: '',
   });
@@ -43,6 +48,83 @@ export default function CreateCollectionPage() {
   const [searchResults, setSearchResults] = useState<ItemSearchResult[]>([]);
   const [showSearchResults, setShowSearchResults] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
+  const [collectionId, setCollectionId] = useState<string | null>(null);
+
+  // Load collection data
+  useEffect(() => {
+    async function loadCollection() {
+      try {
+        setLoading(true);
+        
+        // Fetch collection by slug
+        const collection = await collectionsApi.getBySlug(slug);
+        setCollectionId(collection.id);
+        
+        // Pre-fill form data
+        setFormData({
+          title: collection.title,
+          isPublic: collection.isPublic,
+          isRanked: collection.isRanked,
+          description: collection.description || '',
+        });
+
+        // Fetch collection items
+        const itemsPage = await collectionsApi.getItems(collection.id, {
+          size: 100,
+          sort: collection.isRanked ? 'rank,asc' : 'createdAt,asc',
+        });
+
+        // Fetch item details for each collection item
+        const itemsWithDetails = await Promise.all(
+          itemsPage.content.map(async (collectionItem) => {
+            try {
+              const itemDetails = await itemsApi.getById(collectionItem.itemId);
+              // Convert ItemResponse to ItemSearchResult format
+              const searchResult: ItemSearchResult = {
+                id: itemDetails.id,
+                name: itemDetails.name,
+                slug: itemDetails.slug,
+                imageUrl: itemDetails.imageUrl,
+                price: itemDetails.price,
+                rating: itemDetails.rating,
+                department: itemDetails.department,
+                subTitle: itemDetails.subTitle,
+                description: itemDetails.description,
+                similarity: 0, // Not needed for edit page
+              };
+              return {
+                ...searchResult,
+                rank: collectionItem.rank ?? 1, // Use stored rank or default to 1
+              };
+            } catch (err) {
+              console.error(`Failed to fetch item ${collectionItem.itemId}:`, err);
+              return null;
+            }
+          })
+        );
+
+        // Filter out null items and ensure ranks are set
+        const validItems = itemsWithDetails
+          .filter((item): item is ItemSearchResult & { rank: number } => item !== null)
+          .map((item, index) => ({
+            ...item,
+            rank: item.rank ?? index + 1, // Ensure rank is set
+          }));
+
+        setItems(validItems);
+      } catch (err) {
+        console.error('Error loading collection:', err);
+        alert('Failed to load collection');
+        router.back();
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (slug) {
+      loadCollection();
+    }
+  }, [slug, router]);
 
   const handleInputChange = (field: string, value: string | boolean) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -93,7 +175,7 @@ export default function CreateCollectionPage() {
   const handleSelectItem = (item: ItemSearchResult) => {
     // Check if item is already in the collection
     if (!items.find(i => i.id === item.id)) {
-      const newRank = items.length + 1; // Rank starts at 1
+      const newRank = items.length + 1;
       setItems((prev) => [...prev, { ...item, rank: newRank }]);
     }
     setItemInput('');
@@ -142,18 +224,11 @@ export default function CreateCollectionPage() {
         // Update ranks based on new positions
         return reorderedItems.map((item, index) => ({
           ...item,
-          rank: index + 1, // Rank starts at 1
+          rank: index + 1,
         }));
       });
     }
   };
-
-  function formatCount(count: number): string {
-    if (count >= 1000) {
-      return (count / 1000).toFixed(1) + 'k';
-    }
-    return count.toString();
-  }
 
   const handleSave = async () => {
     // Validation
@@ -167,11 +242,16 @@ export default function CreateCollectionPage() {
       return;
     }
 
+    if (!collectionId) {
+      alert('Collection ID not found');
+      return;
+    }
+
     try {
       // Get logged-in user
       const loggedInUserData = localStorage.getItem('fitfolio_logged_in');
       if (!loggedInUserData) {
-        alert('You must be logged in to create a collection');
+        alert('You must be logged in to edit a collection');
         return;
       }
       
@@ -186,24 +266,18 @@ export default function CreateCollectionPage() {
         isRanked: formData.isRanked,
         items: items.map((item) => ({
           itemId: item.id,
-          rank: item.rank, // Always include rank, regardless of isRanked flag
+          rank: item.rank,
         })),
       };
       
-      // Create collection via API
-      const createdCollection = await collectionsApi.createForUser(
-        loggedInUser.id,
-        collectionData
-      );
+      // Update collection via API
+      await collectionsApi.update(collectionId, loggedInUser.id, collectionData);
       
-      // Fetch user profile to get username for redirect
-      const userProfile = await usersApi.getProfile(loggedInUser.id);
-      
-      // Redirect to the created collection using the new route structure
-      router.push(`/${userProfile.username}/collections/${createdCollection.slug}`);
+      // After updating, redirect to the collection page
+      router.push(`/${username}/collections/${slug}`);
     } catch (error) {
-      console.error('Error creating collection:', error);
-      alert('Failed to create collection. Please try again.');
+      console.error('Error updating collection:', error);
+      alert('Failed to update collection. Please try again.');
     }
   };
 
@@ -211,12 +285,22 @@ export default function CreateCollectionPage() {
     router.back();
   };
 
+  if (loading) {
+    return (
+      <main className="min-h-screen bg-ff-black text-white">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-8">
+          <div className="text-slate-400">Loading collection...</div>
+        </div>
+      </main>
+    );
+  }
+
   return (
     <main className="min-h-screen bg-ff-black text-white overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 py-8">
-        {/* Header with Cancel and Save */}
+        {/* Header with Cancel, View Collection, and Save */}
         <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-semibold">Create Collection</h1>
+          <h1 className="text-3xl font-semibold">Edit Collection</h1>
           <div className="flex gap-4">
             <button
               onClick={handleCancel}
@@ -224,6 +308,12 @@ export default function CreateCollectionPage() {
             >
               Cancel
             </button>
+            <Link
+              href={`/${username}/collections/${slug}`}
+              className="rounded-full bg-slate-600 px-6 py-2 text-sm font-medium text-white hover:bg-slate-500 transition-colors"
+            >
+              View Collection
+            </Link>
             <button
               onClick={handleSave}
               className="rounded-full bg-ff-cyan px-6 py-2 text-sm font-medium text-black hover:bg-ff-cyan/90 transition-colors"
@@ -236,7 +326,7 @@ export default function CreateCollectionPage() {
         <div className="space-y-8">
           {/* Main Form */}
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-8">
-            <h2 className="mb-6 text-xl font-semibold uppercase tracking-wide">NEW COLLECTION</h2>
+            <h2 className="mb-6 text-xl font-semibold uppercase tracking-wide">EDIT COLLECTION</h2>
 
             <div className="grid gap-8 md:grid-cols-2">
               {/* Left Column - Collection Details */}
