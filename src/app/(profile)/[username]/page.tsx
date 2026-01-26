@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
+import Image from "next/image";
 import type { UserProfileResponse } from "@/features/users/types/users.types";
-import { Plus } from "lucide-react";
+import type { CollectionResponse } from "@/features/collections/types/collections.types";
+import { collectionsApi } from "@/features/collections/api/collections.api";
+import { itemsApi } from "@/features/items/api/items.api";
+import { tierlistsApi } from "@/features/tierlists/api/tierlists.api";
+import type { TierListResponse, TierResponse } from "@/features/tierlists/types/tierlists.types";
+import { Plus, Bookmark, ArrowRight } from "lucide-react";
 import Link from "next/link";
 
 interface LoggedInUser {
@@ -189,8 +195,8 @@ export default function ProfilePage() {
         {/* TAB CONTENT */}
         <section className="mt-6">
           {activeTab === "Reviews" && <ReviewsTab />}
-          {activeTab === "Collections" && <CollectionsTab />}
-          {activeTab === "Tier-lists" && <TierListsTab />}
+          {activeTab === "Collections" && profile && <CollectionsTab userId={profile.userId} username={username} />}
+          {activeTab === "Tier-lists" && profile && <TierListsTab userId={profile.userId} username={username} />}
           {activeTab === "Following" && <FollowingTab />}
           {activeTab === "Followers" && <FollowersTab />}
         </section>
@@ -321,45 +327,184 @@ function ReviewsTab() {
 
 /* ---------------- Collection Tab ---------------- */
 
-const mockCollections = [
-  "Top Autumn Items",
-  "Top Autumn Items",
-  "Top Nike T-shirts",
-  "Top Autumn Items",
-  "Top Autumn Items",
-];
+interface CollectionWithItems extends CollectionResponse {
+  topItems: Array<{
+    id: string;
+    imageUrl?: string;
+  }>;
+}
 
-function CollectionsTab() {
+function CollectionsTab({ userId, username }: { userId: string; username: string }) {
+  const [collections, setCollections] = useState<CollectionWithItems[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchCollections() {
+      try {
+        setLoading(true);
+        const collectionsPage = await collectionsApi.getForUser(userId, {
+          size: 20,
+        });
+
+        // Fetch top 4 items for each collection
+        const collectionsWithItems = await Promise.all(
+          collectionsPage.content.map(async (collection) => {
+            try {
+              const itemsPage = await collectionsApi.getItems(collection.id, {
+                size: 4,
+                sort: collection.isRanked ? 'rank,asc' : 'createdAt,asc',
+              });
+
+              // Fetch item details for top 4 items
+              const topItems = await Promise.all(
+                itemsPage.content.slice(0, 4).map(async (collectionItem) => {
+                  try {
+                    const itemDetails = await itemsApi.getById(collectionItem.itemId);
+                    return {
+                      id: itemDetails.id,
+                      imageUrl: itemDetails.imageUrl,
+                    };
+                  } catch {
+                    return {
+                      id: collectionItem.itemId,
+                      imageUrl: undefined,
+                    };
+                  }
+                })
+              );
+
+              return {
+                ...collection,
+                topItems,
+              };
+            } catch {
+              return {
+                ...collection,
+                topItems: [],
+              };
+            }
+          })
+        );
+
+        setCollections(collectionsWithItems);
+      } catch (error) {
+        console.error('Error fetching collections:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (userId) {
+      fetchCollections();
+    }
+  }, [userId]);
+
+  function formatCount(count: number): string {
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'k';
+    }
+    return count.toString();
+  }
+
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="flex flex-col rounded-2xl border border-slate-800 bg-slate-950/80 p-4 animate-pulse"
+          >
+            <div className="h-4 bg-slate-800 rounded w-3/4 mb-3" />
+            <div className="grid grid-cols-2 gap-2">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 rounded-lg bg-slate-800" />
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {mockCollections.map((title, idx) => (
+      {collections.map((collection) => (
         <div
-          key={idx}
+          key={collection.id}
           className="flex flex-col rounded-2xl border border-slate-800 bg-slate-950/80 p-4"
         >
-          <div className="flex items-center justify-between text-sm">
-            <h3 className="font-medium text-slate-100">{title}</h3>
-            <span className="text-xs text-slate-400">1.2k</span>
+          {/* Header */}
+          <div className="flex items-center justify-between text-sm mb-3">
+            <h3 className="font-medium text-slate-100 truncate flex-1 mr-2">
+              {collection.title}
+            </h3>
+            <div className="flex items-center gap-1 text-xs text-slate-400 flex-shrink-0">
+              <Bookmark className="w-3 h-3" />
+              <span>{formatCount(collection.likeCount)}</span>
+            </div>
           </div>
 
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="h-20 rounded-lg bg-slate-800" />
-            ))}
+          {/* Items Grid */}
+          <div className="grid grid-cols-2 gap-2">
+            {collection.topItems.length > 0 ? (
+              <>
+                {collection.topItems.map((item) => (
+                  <div
+                    key={item.id}
+                    className="h-20 rounded-lg bg-slate-800 overflow-hidden relative"
+                  >
+                    {item.imageUrl ? (
+                      <Image
+                        src={item.imageUrl}
+                        alt=""
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, 33vw"
+                      />
+                    ) : null}
+                  </div>
+                ))}
+                {/* Fill remaining slots if less than 4 items */}
+                {Array.from({ length: Math.max(0, 4 - collection.topItems.length) }).map(
+                  (_, i) => (
+                    <div
+                      key={`placeholder-${i}`}
+                      className="h-20 rounded-lg bg-slate-800"
+                    />
+                  )
+                )}
+              </>
+            ) : (
+              // No items - show 4 grey placeholders
+              Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="h-20 rounded-lg bg-slate-800" />
+              ))
+            )}
           </div>
 
-          <button className="mt-3 w-max rounded-full bg-sky-500 px-3 py-1 text-xs font-medium text-white hover:bg-sky-400">
-            View full list
-          </button>
+          {/* Footer */}
+          <div className="mt-3 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-slate-700" />
+              <span className="text-xs text-slate-400">@{username}</span>
+            </div>
+            <Link
+              href={`/${username}/collections/${collection.slug}`}
+              className="flex items-center gap-1 rounded-full bg-ff-cyan px-3 py-1.5 text-xs font-medium text-black hover:bg-ff-cyan/90 transition-colors"
+            >
+              View full collection
+              <ArrowRight className="w-3 h-3" />
+            </Link>
+          </div>
         </div>
       ))}
       <Link
-          href="/collections/new"
-          className="group flex flex-col rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 p-4 items-center justify-center cursor-pointer
-           hover:border-ff-cyan hover:border-solid transition-all duration-300"
-        >          
-          <Plus className="size-[140px] text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300" strokeWidth={0.5} />
-          <h3 className="font-medium text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300">Create new Collection</h3>
+        href="/collections/new"
+        className="group flex flex-col rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 p-4 items-center justify-center cursor-pointer
+         hover:border-ff-cyan transition-all duration-300"
+      >
+        <Plus className="size-[140px] text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300" strokeWidth={0.5} />
+        <h3 className="font-medium text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300">Create new Collection</h3>
       </Link>
     </div>
   );
@@ -367,47 +512,243 @@ function CollectionsTab() {
 
 /* ---------------- Tier List Tabs---------------- */
 
-function TierListsTab() {
+interface TierListWithTiers extends TierListResponse {
+  tiers: Array<{
+    tier: TierResponse;
+    items: Array<{
+      id: string;
+      imageUrl?: string;
+    }>;
+  }>;
+}
+
+function TierListsTab({ userId, username }: { userId: string; username: string }) {
+  const [tierLists, setTierLists] = useState<TierListWithTiers[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchTierLists() {
+      try {
+        setLoading(true);
+        const tierListsPage = await tierlistsApi.getForUser(userId, {
+          size: 20,
+        });
+
+        // Fetch tiers and items for each tier list
+        const tierListsWithTiers = await Promise.all(
+          tierListsPage.content.map(async (tierList) => {
+            try {
+              // Fetch tiers for this tier list
+              const tiers = await tierlistsApi.getTiers(tierList.id);
+              
+              // Sort tiers by position
+              const sortedTiers = tiers.sort((a, b) => a.position - b.position);
+
+              // Fetch items for each tier (limit to top 3 per tier)
+              const tiersWithItems = await Promise.all(
+                sortedTiers.slice(0, 3).map(async (tier) => {
+                  try {
+                    const itemsPage = await tierlistsApi.getItems(tierList.id, {
+                      size: 50, // Get more items to filter by tier
+                      sort: 'position,asc',
+                    });
+
+                    // Filter items for this specific tier and fetch item details
+                    const tierItems = itemsPage.content
+                      .filter(item => item.tierId === tier.id)
+                      .slice(0, 3);
+
+                    const itemsWithDetails = await Promise.all(
+                      tierItems.map(async (tierItem) => {
+                        try {
+                          const itemDetails = await itemsApi.getById(tierItem.itemId);
+                          return {
+                            id: itemDetails.id,
+                            imageUrl: itemDetails.imageUrl,
+                          };
+                        } catch {
+                          return {
+                            id: tierItem.itemId,
+                            imageUrl: undefined,
+                          };
+                        }
+                      })
+                    );
+
+                    return {
+                      tier,
+                      items: itemsWithDetails,
+                    };
+                  } catch {
+                    return {
+                      tier,
+                      items: [],
+                    };
+                  }
+                })
+              );
+
+              return {
+                ...tierList,
+                tiers: tiersWithItems,
+              };
+            } catch {
+              return {
+                ...tierList,
+                tiers: [],
+              };
+            }
+          })
+        );
+
+        setTierLists(tierListsWithTiers);
+      } catch (error) {
+        console.error('Error fetching tier lists:', error);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    if (userId) {
+      fetchTierLists();
+    }
+  }, [userId]);
+
+  function formatCount(count: number): string {
+    if (count >= 1000) {
+      return (count / 1000).toFixed(1) + 'k';
+    }
+    return count.toString();
+  }
+
+  if (loading) {
+    return (
+      <div className="grid gap-4 md:grid-cols-3">
+        {Array.from({ length: 6 }).map((_, idx) => (
+          <div
+            key={idx}
+            className="flex flex-col rounded-2xl border border-slate-800 bg-slate-950/80 p-4 animate-pulse"
+          >
+            <div className="h-4 bg-slate-800 rounded w-3/4 mb-3" />
+            <div className="space-y-2">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="flex items-center gap-2">
+                  <div className="h-6 w-6 rounded-full bg-slate-800" />
+                  <div className="flex flex-1 gap-2">
+                    {Array.from({ length: 3 }).map((_, j) => (
+                      <div key={j} className="h-12 flex-1 rounded-md bg-slate-800" />
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   return (
     <div className="grid gap-4 md:grid-cols-3">
-      {Array.from({ length: 4 }).map((_, idx) => (
+      {tierLists.map((tierList) => (
         <div
-          key={idx}
+          key={tierList.id}
           className="flex flex-col rounded-2xl border border-slate-800 bg-slate-950/80 p-4"
         >
-          <div className="flex items-center justify-between text-sm">
-            <h3 className="font-medium text-slate-100">Best Winter Shoes</h3>
-            <span className="text-xs text-slate-400">1.2k</span>
+          {/* Header */}
+          <div className="flex items-center justify-between text-sm mb-3">
+            <h3 className="font-medium text-slate-100 truncate flex-1 mr-2">
+              {tierList.title}
+            </h3>
+            <div className="flex items-center gap-1 text-xs text-slate-400 flex-shrink-0">
+              <Bookmark className="w-3 h-3" />
+              <span>{formatCount(tierList.likeCount)}</span>
+            </div>
           </div>
 
+          {/* Tiers */}
           <div className="mt-3 space-y-2 text-xs">
-            {["S", "A", "B"].map((tier) => (
-              <div key={tier} className="flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[11px]">
-                  {tier}
+            {tierList.tiers.length > 0 ? (
+              tierList.tiers.map((tierWithItems) => {
+                const tierLabel = tierWithItems.tier.label || tierWithItems.tier.name.charAt(0).toUpperCase();
+                return (
+                  <div key={tierWithItems.tier.id} className="flex items-center gap-2">
+                    <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[11px] flex-shrink-0">
+                      {tierLabel}
+                    </div>
+                    <div className="flex flex-1 gap-2">
+                      {tierWithItems.items.length > 0 ? (
+                        <>
+                          {tierWithItems.items.map((item) => (
+                            <div
+                              key={item.id}
+                              className="h-12 flex-1 rounded-md bg-slate-800 overflow-hidden relative"
+                            >
+                              {item.imageUrl ? (
+                                <Image
+                                  src={item.imageUrl}
+                                  alt=""
+                                  fill
+                                  className="object-cover"
+                                  sizes="(max-width: 768px) 33vw, 25vw"
+                                />
+                              ) : null}
+                            </div>
+                          ))}
+                          {/* Fill remaining slots if less than 3 items */}
+                          {Array.from({ length: Math.max(0, 3 - tierWithItems.items.length) }).map(
+                            (_, i) => (
+                              <div
+                                key={`placeholder-${i}`}
+                                className="h-12 flex-1 rounded-md bg-slate-800"
+                              />
+                            )
+                          )}
+                        </>
+                      ) : (
+                        // No items - show 3 grey placeholders
+                        Array.from({ length: 3 }).map((_, i) => (
+                          <div key={i} className="h-12 flex-1 rounded-md bg-slate-800" />
+                        ))
+                      )}
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              // No tiers - show 3 placeholder tiers
+              ["S", "A", "B"].map((tier) => (
+                <div key={tier} className="flex items-center gap-2">
+                  <div className="flex h-6 w-6 items-center justify-center rounded-full bg-slate-800 text-[11px]">
+                    {tier}
+                  </div>
+                  <div className="flex flex-1 gap-2">
+                    {Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="h-12 flex-1 rounded-md bg-slate-800" />
+                    ))}
+                  </div>
                 </div>
-                <div className="flex flex-1 gap-2">
-                  {Array.from({ length: 3 }).map((__, i) => (
-                    <div key={i} className="h-12 flex-1 rounded-md bg-slate-800" />
-                  ))}
-                </div>
-              </div>
-            ))}
+              ))
+            )}
           </div>
 
-          <button className="mt-3 w-max rounded-full bg-sky-500 px-3 py-1 text-xs font-medium text-white hover:bg-sky-400">
+          {/* Footer */}
+          <Link
+            href={`/${username}/tierlists/${tierList.slug}`}
+            className="mt-3 w-max rounded-full bg-ff-cyan px-3 py-1 text-xs font-medium text-black hover:bg-ff-cyan/90 transition-colors"
+          >
             View full tier-list
-          </button>
+          </Link>
         </div>
       ))}
-      <div
-          key={2}
-          className="group flex flex-col rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 p-4 items-center justify-center cursor-pointer
-           hover:border-ff-cyan group-hover:border-solid transition-all duration-300"
-        >
-          <Plus className="size-[140px] text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300" strokeWidth={0.5} />
-          <h3 className="font-medium text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300">Create new Tier-list</h3>
-      </div>
+      <Link
+        href="/tierlists/new"
+        className="group flex flex-col rounded-2xl border border-dashed border-slate-800 bg-slate-950/80 p-4 items-center justify-center cursor-pointer
+         hover:border-ff-cyan transition-all duration-300"
+      >
+        <Plus className="size-[140px] text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300" strokeWidth={0.5} />
+        <h3 className="font-medium text-ff-gray opacity-50 group-hover:opacity-100 group-hover:text-ff-cyan transition-all duration-300">Create new Tier-list</h3>
+      </Link>
     </div>
   );
 }
