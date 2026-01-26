@@ -50,6 +50,11 @@ export default function EditCollectionPage() {
   const [activeId, setActiveId] = useState<string | null>(null);
   const [collectionId, setCollectionId] = useState<string | null>(null);
 
+  // Debug: Log formData changes
+  useEffect(() => {
+    console.log('FormData updated:', formData);
+  }, [formData]);
+
   // Load collection data
   useEffect(() => {
     async function loadCollection() {
@@ -60,11 +65,30 @@ export default function EditCollectionPage() {
         const collection = await collectionsApi.getBySlug(slug);
         setCollectionId(collection.id);
         
-        // Pre-fill form data
+        // Debug: log the full collection object to see what we're getting
+        console.log('Full collection response:', collection);
+        console.log('Collection keys:', Object.keys(collection));
+        console.log('isPublic value:', collection.isPublic, 'type:', typeof collection.isPublic);
+        console.log('isRanked value:', collection.isRanked, 'type:', typeof collection.isRanked);
+        
+        // Handle potential field name variations (isPublic vs public, isRanked vs ranked)
+        // Jackson might serialize boolean fields differently
+        const isPublicValue = (collection as any).isPublic ?? (collection as any).public ?? false;
+        const isRankedValue = (collection as any).isRanked ?? (collection as any).ranked ?? false;
+        
+        // Pre-fill form data - ensure boolean values are explicitly set
         setFormData({
-          title: collection.title,
-          isPublic: collection.isPublic,
-          isRanked: collection.isRanked,
+          title: collection.title || '',
+          isPublic: Boolean(isPublicValue),
+          isRanked: Boolean(isRankedValue),
+          description: collection.description || '',
+        });
+        
+        // Debug: log the form data we're setting
+        console.log('Setting form data:', {
+          title: collection.title || '',
+          isPublic: Boolean(isPublicValue),
+          isRanked: Boolean(isRankedValue),
           description: collection.description || '',
         });
 
