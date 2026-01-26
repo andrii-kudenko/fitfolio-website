@@ -12,6 +12,30 @@ export interface TierListCreate {
   isPublic?: boolean | null;
 }
 
+// Java: record TierListCreateWithTiers(...)
+export interface TierListCreateWithTiers {
+  tierList: {
+    title: string;
+    description?: string | null;
+    coverImageUrl?: string | null;
+    isPublic?: boolean | null;
+  };
+  tiers: Array<{
+    position: number;
+    label?: string | null;
+    name: string;
+    color?: string | null;
+    items: Array<{
+      itemId: string;
+      position: number;
+    }>;
+  }>;
+  buffer: Array<{
+    itemId: string;
+    position: number;
+  }>;
+}
+
 // Java: record TierListResponse(...)
 // Matches your original TierList interface shape
 export interface TierListResponse {
@@ -89,13 +113,50 @@ export interface TierListItemCreate {
 export interface TierListItemResponse {
   id: string;
   tierListId: string;
-  tierId: string;
+  tierId: string | null; // Can be null for buffer items
   itemId: string;
   position: number;
   createdAt: string;
 }
 
 export type TierListItemPage = PageResult<TierListItemResponse>;
+
+// ---------------------------------------------------------------------------
+// TierListDetail DTO mirrors
+// ---------------------------------------------------------------------------
+
+// Java: record TierListDetailResponse(...)
+export interface TierListDetailResponse {
+  id: string;
+  userId: string;
+  title: string;
+  slug: string;
+  description: string | null;
+  coverImageUrl: string | null;
+  isPublic: boolean;
+  likeCount: number;
+  commentCount: number;
+  itemCount: number;
+  viewCount: number;
+  createdAt: string;
+  updatedAt: string;
+  tiers: Array<{
+    id: string;
+    tierListId: string;
+    label: string | null;
+    name: string;
+    color: string | null;
+    position: number;
+    items: Array<{
+      id: string;
+      tierListId: string;
+      tierId: string;
+      itemId: string;
+      position: number;
+      createdAt: string;
+    }>;
+  }>;
+}
 
 
 
