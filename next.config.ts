@@ -19,6 +19,11 @@ const nextConfig: NextConfig = {
         protocol: 'https',
         hostname: 'assets.adidas.com',
       },
+      {
+        protocol: "https",
+        hostname: "i.pravatar.cc",
+      },
+
       // Add more domains as needed when you encounter them
     ],
   },

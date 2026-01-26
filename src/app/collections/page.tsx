@@ -1,4 +1,8 @@
 export default function CollectionsPage() {
-    return null; // or <></> or <div />
+    return (
+      <div>
+        <h1>Collections</h1>
+      </div>
+    )
   }
   
