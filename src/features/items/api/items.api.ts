@@ -1,5 +1,5 @@
 import { api } from "@/shared/lib/api";
-import { ItemCreate, ItemResponse, ItemPage, PageMeta, ItemLikeResponse, ItemLikeCreate } from "../types/items.types";
+import { ItemCreate, ItemResponse, ItemPage, PageMeta, ItemLikeResponse, ItemLikeCreate, ItemFullResponse } from "../types/items.types";
 
 export const itemsApi = {
   // getAll with pagination support
@@ -31,6 +31,11 @@ export const itemsApi = {
 
   getBySlug: async (slug: string): Promise<ItemResponse> => {
     const { data } = await api.get<ItemResponse>(`/items/slug/${slug}`);
+    return data;
+  },
+
+  getBySlugFull: async (slug: string): Promise<ItemFullResponse> => {
+    const { data } = await api.get<ItemFullResponse>(`/items/slug/${slug}/full`);
     return data;
   },
 

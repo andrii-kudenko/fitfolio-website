@@ -296,6 +296,15 @@ export default function FitFolioNavbarDesktop({
     }
   };
 
+  const handleSearchResultClick = (item: ItemSearchResult) => {
+    setInternalSearching(false);
+    setSearchInput("");
+    setSearchResults([]);
+    handleSearchClick();
+    setTimeout(() => {
+      router.push(`/items/${item.slug}`);
+    }, 100);
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ">
@@ -392,11 +401,11 @@ export default function FitFolioNavbarDesktop({
                           const price = item.price ? `$${item.price.toFixed(2)}` : 'Price not available';
                           
                           return (
-                            <Link
+                            <button
                               key={item.id}
-                              href={`/items/${item.slug}`}
                               className="bg-black w-full flex items-center
                               px-3 py-3 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
+                              onClick={() => handleSearchResultClick(item)}
                             >
                               <div className="rounded-xl bg-white/6 overflow-hidden flex-shrink-0">
                                 <Image 
@@ -420,7 +429,7 @@ export default function FitFolioNavbarDesktop({
                                   </p>
                                 )}
                               </div>
-                            </Link>
+                            </button>
                           );
                         })
                       )}
@@ -498,6 +507,14 @@ export default function FitFolioNavbarDesktop({
                       <MenuItem
                         label="Profile"
                         onClick={handleProfileClick}
+                      />
+
+                      <MenuItem
+                        label="Fit Profile"
+                        onClick={() => {
+                          setOpen(false);
+                          handleNavigate("/fit-profile");
+                        }}
                       />
 
                       <MenuItem

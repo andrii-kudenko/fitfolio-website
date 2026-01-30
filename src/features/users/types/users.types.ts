@@ -57,39 +57,42 @@ export interface UserCreate {
   // -----------------------------
   
   // Java: record FitProfileCreate(Boolean isPublic, String gender, String bodyType,
-  //                               String heightCm, String weightKg, String topSize,
-  //                               String bottomSize, String fitPreference,
+  //                               Integer heightCm, String lengthUnit, BigDecimal weightKg,
+  //                               String weightUnit, String topSize, String fitPreference,
   //                               String stylePreference, String shoeSizeSystem,
   //                               Double shoesSizeValue)
   export interface FitProfileCreate {
     isPublic?: boolean;
     gender?: string | null;
     bodyType?: string | null;
-    heightCm?: string | null;
-    weightKg?: string | null;
+    heightCm?: number | null; // Integer on backend
+    lengthUnit?: string | null;
+    weightKg?: number | null; // BigDecimal on backend
+    weightUnit?: string | null;
     topSize?: string | null;
-    bottomSize?: string | null;
     fitPreference?: string | null;
     stylePreference?: string | null;
     shoeSizeSystem?: string | null;
     shoesSizeValue?: number | null;
   }
   
-  // Java: record FitProfileResponse(UUID id, boolean isPublic, UUID userId,
-  //                                 String gender, String bodyType, String heightCm,
-  //                                 String weightKg, String topSize, String bottomSize,
-  //                                 String fitPreference, String stylePreference,
-  //                                 String shoeSizeSystem, Double shoesSizeValue)
+  // Java: record FitProfileResponse(UUID id, UUID userId, boolean isPublic,
+  //                                 String gender, String bodyType, Integer heightCm,
+  //                                 String lengthUnit, BigDecimal weightKg, String weightUnit,
+  //                                 String topSize, String fitPreference,
+  //                                 String stylePreference, String shoeSizeSystem,
+  //                                 Double shoesSizeValue)
   export interface FitProfileResponse {
     id: string;
-    isPublic: boolean;
     userId: string;
+    isPublic: boolean;
     gender: string | null;
     bodyType: string | null;
-    heightCm: string | null;
-    weightKg: string | null;
+    heightCm: number | null; // Integer on backend
+    lengthUnit: string | null;
+    weightKg: number | null; // BigDecimal on backend
+    weightUnit: string | null;
     topSize: string | null;
-    bottomSize: string | null;
     fitPreference: string | null;
     stylePreference: string | null;
     shoeSizeSystem: string | null;

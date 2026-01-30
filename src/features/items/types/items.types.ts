@@ -29,7 +29,8 @@ export interface ItemResponse {
   rating?: number;
 }
 
-export interface ItemResponseFull extends ItemResponse {
+export interface ItemFullResponse {
+  item: ItemResponse;
   brand?: BrandResponse;
   category?: CategoryResponse;
   contributor?: UserProfileResponse;
