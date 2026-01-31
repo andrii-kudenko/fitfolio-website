@@ -2,10 +2,14 @@
 import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Eye, MessageCircle, Search, ChevronRight } from 'lucide-react';
+import { Star, Eye, MessageCircle, Search, ChevronRight, ThumbsUp, MoreHorizontal, ChevronDown } from 'lucide-react';
 import { itemsApi } from '@/features/items/api/items.api';
 import { ItemFullResponse } from '@/features/items/types/items.types';
 import { useParams } from 'next/navigation';
+import { reviewsApi } from '@/features/reviews/api/reviews.api';
+import { ReviewResponse, ReviewPage } from '@/features/reviews/types/reviews.types';
+import { usersApi } from '@/features/users/api/users.api';
+import { UserProfileResponse, FitProfileResponse } from '@/features/users/types/users.types';
 
 // Mock related items
 const mockRelatedItems = [
@@ -57,6 +61,12 @@ export default function ItemPage() {
   const [error, setError] = useState<string | null>(null);
   const [reveal, setReveal] = useState(false);
   const [showSkeletonOverlay, setShowSkeletonOverlay] = useState(true);
+  const [activeTab, setActiveTab] = useState<'reviews' | 'comments'>('reviews');
+  const [reviews, setReviews] = useState<ReviewResponse[]>([]);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
+  const [sortBy, setSortBy] = useState('newest');
+  const [userProfiles, setUserProfiles] = useState<Record<string, UserProfileResponse>>({});
+  const [fitProfiles, setFitProfiles] = useState<Record<string, FitProfileResponse>>({});
   const relatedItems = mockRelatedItems;
   const params = useParams();
   const slug = params.slug as string;
@@ -101,6 +111,58 @@ export default function ItemPage() {
       setShowSkeletonOverlay(false);
     }
   }, [loading, item, error]);
+
+  // Fetch reviews when item is loaded
+  useEffect(() => {
+    if (!item?.item?.id) return;
+
+    setReviewsLoading(true);
+    reviewsApi
+      .getForItem(item.item.id, { sort: sortBy === 'newest' ? 'createdAt,desc' : 'createdAt,asc' })
+      .then((reviewPage: ReviewPage) => {
+        setReviews(reviewPage.content || []);
+        
+        // Fetch user profiles and fit profiles for each review
+        const userIds = [...new Set(reviewPage.content?.map(r => r.userId) || [])];
+        
+        // Fetch user profiles
+        const profilePromises = userIds.map(userId => 
+          usersApi.getProfile(userId)
+            .then((profile: UserProfileResponse) => ({ userId, profile }))
+            .catch(() => null)
+        );
+        
+        // Fetch fit profiles
+        const fitProfilePromises = userIds.map(userId =>
+          usersApi.getFitProfile(userId)
+            .then((fitProfile: FitProfileResponse) => ({ userId, fitProfile }))
+            .catch(() => null)
+        );
+        
+        Promise.all([...profilePromises, ...fitProfilePromises]).then((results: Array<{ userId: string; profile?: UserProfileResponse; fitProfile?: FitProfileResponse } | null>) => {
+          const profiles: Record<string, UserProfileResponse> = {};
+          const fitProfilesData: Record<string, FitProfileResponse> = {};
+          
+          results.forEach(result => {
+            if (result) {
+              if ('profile' in result && result.profile) {
+                profiles[result.userId] = result.profile;
+              }
+              if ('fitProfile' in result && result.fitProfile) {
+                fitProfilesData[result.userId] = result.fitProfile;
+              }
+            }
+          });
+          
+          setUserProfiles(profiles);
+          setFitProfiles(fitProfilesData);
+        });
+      })
+      .catch((err) => {
+        console.error('Error fetching reviews:', err);
+      })
+      .finally(() => setReviewsLoading(false));
+  }, [item?.item?.id, sortBy]);
 
   const isLoaded = !!item && !loading && !error;
   const ease = 'ease-[cubic-bezier(.2,.8,.2,1)]';
@@ -505,6 +567,182 @@ export default function ItemPage() {
         >
           <h2 className="text-2xl font-semibold mb-6">Lists that include this item</h2>
           <div className="text-white/60">Coming soon...</div>
+        </section>
+
+        {/* Reviews Section */}
+        <section
+          className={`mb-12 ${isLoaded ? contentEnter : ''}`}
+        >
+          {/* Tabs */}
+          <div className="flex gap-2 mb-6">
+            <button
+              onClick={() => setActiveTab('reviews')}
+              className={`px-6 py-2 rounded-lg font-medium transition ${
+                activeTab === 'reviews'
+                  ? 'bg-ff-blue text-white'
+                  : 'bg-white/5 text-white hover:bg-white/10'
+              }`}
+            >
+              Reviews
+            </button>
+            <button
+              onClick={() => setActiveTab('comments')}
+              className={`px-6 py-2 rounded-lg font-medium transition ${
+                activeTab === 'comments'
+                  ? 'bg-ff-blue text-white'
+                  : 'bg-ff-black text-white hover:bg-white/10'
+              }`}
+            >
+              Comments
+            </button>
+          </div>
+
+          {activeTab === 'reviews' && (
+            <>
+              {/* Write Review Button */}
+              <Link
+                href={`/items/${slug}/review`}
+                className="block w-full px-4 py-3 mb-6 bg-white/5 border border-white/20 rounded-lg text-white/60 hover:border-white/40 hover:text-white transition text-left"
+              >
+                + Write a review
+              </Link>
+
+              {/* Sort By */}
+              <div className="flex items-center gap-3 mb-6">
+                <span className="text-white/60 text-sm font-medium">SORT BY</span>
+                <div className="relative">
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="appearance-none px-4 py-2 pr-8 bg-white/5 border border-white/20 rounded-lg text-white text-sm focus:border-ff-cyan focus:outline-none cursor-pointer"
+                  >
+                    <option value="newest">NEWEST</option>
+                    <option value="oldest">OLDEST</option>
+                    <option value="rating-high">HIGHEST RATING</option>
+                    <option value="rating-low">LOWEST RATING</option>
+                  </select>
+                  <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-white/60 pointer-events-none" />
+                </div>
+              </div>
+
+              {/* Reviews List */}
+              {reviewsLoading ? (
+                <div className="space-y-4">
+                  {Array.from({ length: 2 }).map((_, i) => (
+                    <Skeleton key={i} className="h-48 w-full rounded-lg" />
+                  ))}
+                </div>
+              ) : reviews.length === 0 ? (
+                <div className="text-center py-12 text-white/60">
+                  No reviews yet. Be the first to review this item!
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {reviews.map((review) => {
+                    const userProfile = userProfiles[review.userId];
+                    const fitProfile = fitProfiles[review.userId];
+                    const username = userProfile?.username || 'anonymous';
+                    
+                    // Format fit profile info
+                    const fitInfo: string[] = [];
+                    if (fitProfile?.heightCm && fitProfile?.lengthUnit) {
+                      if (fitProfile.lengthUnit === 'in') {
+                        const totalInches = fitProfile.heightCm / 2.54;
+                        const feet = Math.floor(totalInches / 12);
+                        const inches = Math.round(totalInches % 12);
+                        fitInfo.push(`${feet}'${inches}"`);
+                      } else {
+                        fitInfo.push(`${fitProfile.heightCm} cm`);
+                      }
+                    }
+                    if (fitProfile?.weightKg && fitProfile?.weightUnit) {
+                      if (fitProfile.weightUnit === 'lbs') {
+                        // Convert kg to lbs for display
+                        const lbs = Math.round(fitProfile.weightKg / 0.453592);
+                        fitInfo.push(`${lbs}lbs`);
+                      } else {
+                        fitInfo.push(`${Math.round(fitProfile.weightKg)}kg`);
+                      }
+                    }
+                    if (review.purchasedSize) {
+                      fitInfo.push(`Size ${review.purchasedSize}`);
+                    }
+                    
+                    return (
+                      <div
+                        key={review.id}
+                        className="bg-white/5 border border-white/10 rounded-lg p-6"
+                      >
+                        {/* Rating and Title */}
+                        <div className="flex items-start gap-4 mb-3">
+                          <div className="text-2xl font-semibold">
+                            {review.rating ? `${Math.round(review.rating)}★` : 'N/A'}
+                          </div>
+                          {review.title && (
+                            <h3 className="text-lg font-semibold flex-1">{review.title}</h3>
+                          )}
+                        </div>
+
+                        {/* User Info */}
+                        <div className="flex items-center gap-3 mb-4">
+                          <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
+                            {userProfile?.avatarUrl ? (
+                              <Image
+                                src={userProfile.avatarUrl}
+                                alt={username}
+                                width={32}
+                                height={32}
+                                className="w-full h-full object-cover"
+                              />
+                            ) : (
+                              <span className="text-white/60 text-xs">
+                                {username.charAt(0).toUpperCase()}
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-2 text-sm flex-wrap">
+                            <span className="text-white/80">@{username}</span>
+                            {fitInfo.length > 0 && (
+                              <>
+                                {fitInfo.map((info, idx) => (
+                                  <span key={idx} className="text-white/60">
+                                    {idx > 0 && <span className="text-white/40 mx-1">•</span>}
+                                    {info}
+                                  </span>
+                                ))}
+                              </>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Review Text */}
+                        {review.text && (
+                          <p className="text-white/80 mb-4 leading-relaxed">{review.text}</p>
+                        )}
+
+                        {/* Engagement */}
+                        <div className="flex items-center gap-4">
+                          <button className="flex items-center gap-2 text-white/60 hover:text-white transition">
+                            <ThumbsUp className="w-4 h-4" />
+                            <span className="text-sm">{review.likeCount || 0}</span>
+                          </button>
+                          <button className="text-white/60 hover:text-white transition">
+                            <MoreHorizontal className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </>
+          )}
+
+          {activeTab === 'comments' && (
+            <div className="text-center py-12 text-white/60">
+              Comments section coming soon...
+            </div>
+          )}
         </section>
           </>
         )}
