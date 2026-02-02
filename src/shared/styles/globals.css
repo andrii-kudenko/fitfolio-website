@@ -11,6 +11,8 @@
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
   --color-ff-cyan: #55C1FF;
+  --color-ff-blue: #2394EA;
+  --color-ff-gray: #7D8184;
   --color-ff-black: #000500;
 }
 
@@ -36,4 +38,16 @@ body {
 .scrollbar-hide {
   -ms-overflow-style: none;  /* IE and Edge */
   scrollbar-width: none;  /* Firefox */
+}
+
+/* Dropdown option styling for dark theme */
+select option {
+  background-color: #000000 !important;
+  color: #ffffff !important;
+}
+
+select option:checked,
+select option:hover {
+  background-color: var(--color-ff-blue) !important;
+  color: #ffffff !important;
 }
