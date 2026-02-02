@@ -62,6 +62,8 @@ const CLIMATE_OPTIONS = [
   'All seasons',
 ];
 
+const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL'];
+
 export default function WriteReviewPage() {
   const params = useParams();
   const router = useRouter();
@@ -86,6 +88,11 @@ export default function WriteReviewPage() {
   const [wouldBuyAgain, setWouldBuyAgain] = useState<boolean>(false);
   const [reviewText, setReviewText] = useState<string>('');
   const [reviewTitle, setReviewTitle] = useState<string>('');
+
+  // Ensure page opens at top when navigating to write review
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, []);
 
   useEffect(() => {
     if (!slug) return;
@@ -224,7 +231,7 @@ export default function WriteReviewPage() {
     }
 
     if (categoryType === 'other' && (!purchasedSize || purchasedSize.trim() === '')) {
-      setError('Please enter the size you purchased');
+      setError('Please select the size you purchased');
       return;
     }
 
@@ -484,13 +491,18 @@ export default function WriteReviewPage() {
             {getCategoryType() === 'other' && (
               <div>
                 <label className="block text-white mb-2">What size did you purchase?</label>
-                <input
-                  type="text"
+                <select
                   value={purchasedSize}
                   onChange={(e) => setPurchasedSize(e.target.value)}
-                  placeholder="Top size (e.g., S, M, L, XL)"
-                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white placeholder-white/40 focus:border-[var(--color-ff-blue)] focus:outline-none"
-                />
+                  className="w-full px-4 py-3 bg-white/5 border border-white/20 rounded-lg text-white focus:border-[var(--color-ff-blue)] focus:outline-none"
+                >
+                  <option value="">Choose a size</option>
+                  {SIZE_OPTIONS.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
               </div>
             )}
             {/* No size input for accessories */}
