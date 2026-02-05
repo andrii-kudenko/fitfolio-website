@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useEffect, useRef, useState, useMemo } from "react";
-import { useRouter, usePathname } from "next/navigation";
+import { useRouter, usePathname, useSearchParams } from "next/navigation";
 import { Search, ChevronDown, ChevronUp, User2 } from "lucide-react";
 import SearchIcon from "@/shared/components/navbar/SearchIcon";
 import NavbarChevron from "@/shared/components/navbar/NavbarChevron";
@@ -50,6 +50,9 @@ export default function FitFolioNavbarDesktop({
 }: NavbarDesktopProps) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
+  const isItemsPage = pathname === "/items";
+  const itemsPageQuery = isItemsPage ? (searchParams.get("q") ?? "") : "";
   const [open, setOpen] = useState(false);
   // Internal state for search if not controlled by parent
   const [internalSearching, setInternalSearching] = useState(false);
@@ -306,8 +309,10 @@ export default function FitFolioNavbarDesktop({
     }, 100);
   };
 
+  console.log("isSearching right now: ", isSearching);
+
   return (
-    <header className="sticky top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ">
+    <header className={`top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ${isItemsPage ? "relative" : "sticky"}`}>
       <div className="mx-auto flex items-center justify-between px-8 relative py-3">
         {/* Left spacer for centering */}
         <div className="flex-1"></div>
@@ -335,19 +340,39 @@ export default function FitFolioNavbarDesktop({
                 Items
               </button>
             </li>
-            <li className="relative">
+            <li className="relative flex items-center gap-2">
+              {/* Search icon always visible */}
               <button
                 ref={searchIconBtnRef}
                 onClick={handleSearchClick}
                 className={`rounded-xl px-1.5 py-1 text-[20px] font-medium text-white/85 outline-none transition-all duration-300 hover:text-white 
-                  ring-offset-2 ${isSearching ? "rotate-45" : ""}`}
-                  aria-label="Search"
+                  ring-offset-2 flex-shrink-0 ${isSearching || isItemsPage ? "rotate-45" : ""}`}
+                aria-label="Search"
               >
                 <SearchIcon />
               </button>
 
-              {/* Search Bar - appears below navbar when clicked */}
-              {isSearching && (
+              {/* On /items page: show search input next to icon that syncs with URL */}
+              {/* {isItemsPage && (
+                <input
+                  type="text"
+                  placeholder="Nike Jordan"
+                  className="w-[240px] h-9 px-4 rounded-full bg-white/5 text-white placeholder:text-white/40 outline-none border border-white/20 focus:border-ff-cyan transition"
+                  value={itemsPageQuery}
+                  onChange={(e) => {
+                    const q = e.target.value;
+                    const params = new URLSearchParams(searchParams.toString());
+                    if (q.trim()) params.set("q", q);
+                    else params.delete("q");
+                    const query = params.toString();
+                    router.replace(query ? `/items?${query}` : "/items");
+                  }}
+                  aria-label="Search items"
+                />
+              )} */}
+
+              {/* Search Bar dropdown - only when not on /items (on items the input is inline) */}
+              {(isItemsPage || isSearching) && (
                 <div 
                   ref={searchRef}
                   className="absolute top-1/2 translate-y-2 left-1/2 -translate-x-1/2 w-[550px] max-w-2xl px-4 pb-4 z-40"
@@ -361,8 +386,25 @@ export default function FitFolioNavbarDesktop({
                   
                   {/* Search input */}
                   <div className="relative z-10">
-                    
-                    <input
+                    {isItemsPage ? (
+                      <input
+                      ref={searchInputRef}
+                      type="text"
+                      placeholder="Nike Jordan"
+                      className="w-full h-12 px-4 rounded-full bg-[#000500] text-white placeholder:text-white/40 outline-none  ring-2 ring-ff-cyan transition duration-300"
+                      value={itemsPageQuery}
+                      onChange={(e) => {
+                        const q = e.target.value;
+                        const params = new URLSearchParams(searchParams.toString());
+                        if (q.trim()) params.set("q", q);
+                        else params.delete("q");
+                        const query = params.toString();
+                        router.replace(query ? `/items?${query}` : "/items");
+                      }}
+                      aria-label="Search items"
+                    />
+                    ) : (
+                      <input
                       ref={searchInputRef}
                       type="text"
                       placeholder="Nike Jordan"
@@ -370,6 +412,8 @@ export default function FitFolioNavbarDesktop({
                       value={searchInput}
                       onChange={(e) => setSearchInput(e.target.value)}
                     />
+                    )}
+                    
                   </div>
 
                   {searchInput.trim() && (
@@ -379,14 +423,25 @@ export default function FitFolioNavbarDesktop({
                         <div className="flex rounded-full px-8 py-1 bg-white/6">
                           <span>Items {searchResults.length > 0 && `(${searchResults.length})`}</span>
                         </div>
-                        <div className="flex rounded-full px-8 py-1 bg-white/6 items-center gap-2">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const query = searchInput.trim() ? `?q=${encodeURIComponent(searchInput)}` : "";
+                            if (onSearch) onSearch();
+                            else setInternalSearching(false);
+                            setSearchInput("");
+                            setSearchResults([]);
+                            router.push(`/items${query}`);
+                          }}
+                          className="flex rounded-full px-8 py-1 bg-white/6 items-center gap-2 cursor-pointer hover:bg-white/10 transition"
+                        >
                           <span>Search with filters</span>
                           <svg width="20" height="20" viewBox="0 0 12 12" fill="none" xmlns="http://www.w3.org/2000/svg">
                             <path d="M6.2064 9.71499C6.12746 10.0096 5.83069 10.3442 5.54427 10.4279L4.74557 10.685C4.00807 10.9066 3.24682 10.2316 3.45647 9.4492L4.14881 6.86535C4.24069 6.52244 4.16526 6.03118 4.03195 5.73664L2.70018 3.28854C2.51986 2.97623 2.44316 2.4898 2.5221 2.1952L2.82233 1.07472C2.97892 0.490334 3.53619 0.168608 4.07227 0.312252L10.515 2.03856C11.051 2.18221 11.3728 2.73948 11.2292 3.27557L10.9419 4.34774C10.8371 4.73894 10.4601 5.16074 10.1539 5.33752" stroke="#55C1FF" strokeWidth="0.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M7.38132 8.70985C8.23486 8.93855 9.11221 8.43202 9.34091 7.57848C9.56962 6.72493 9.06308 5.84759 8.20954 5.61888C7.356 5.39018 6.47866 5.89671 6.24995 6.75025C6.02125 7.60379 6.52778 8.48114 7.38132 8.70985Z" stroke="#55C1FF" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"/>
                             <path d="M9.1392 9.4914L8.78564 8.87903" stroke="#55C1FF" strokeWidth="0.5" strokeLinecap="round" strokeLinejoin="round"/>
                           </svg>
-                        </div>                      
+                        </button>                      
                       </div>
                       
                       <div className=" py-2 max-h-[500px] w-full flex flex-col gap-2 overflow-y-auto scrollbar-hide">

@@ -36,7 +36,8 @@ export interface ItemFullResponse {
   contributor?: UserProfileResponse;
 }
 
-  export type ItemPage = PageResult<ItemResponse>;
+  export type ItemPage = PageResult<ItemFullResponse>;
+  // export type ItemPageFull = PageResult<ItemFullResponse>;
 
   // Create payload (mirror your ItemCreate DTO)
   export interface ItemCreate {

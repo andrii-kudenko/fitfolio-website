@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/shared/styles/globals.css";
 import NavbarWrapper from "@/shared/components/navbar/NavbarWrapper";
+import ScrollToTop from "@/shared/components/scroll-to-top/ScrollToTop";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -29,6 +30,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
       >
         <NavbarWrapper isAuthenticated={false} />
+        <ScrollToTop />
 
         {/* Page content (Home, Profile, Items, etc.) */}
         <div className="">

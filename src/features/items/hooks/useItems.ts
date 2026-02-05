@@ -1,29 +1,29 @@
-import { useEffect, useState } from "react";
-import { itemsApi } from "../api/items.api";
-import { ItemResponse } from "../types/items.types";
+// import { useEffect, useState } from "react";
+// import { itemsApi } from "../api/items.api";
+// import { ItemFullResponse, ItemResponse } from "../types/items.types";
 
-export function useItems() {
-  const [items, setItems] = useState<ItemResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+// export function useItems() {
+//   const [items, setItems] = useState<ItemFullResponse[]>([]);
+//   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    itemsApi.getAll()
-      .then((data) => setItems(data.content))
-      .finally(() => setLoading(false));
-  }, []);
+//   useEffect(() => {
+//     itemsApi.getAll()
+//       .then((data) => setItems(data.content.map((item) => item.item)))
+//       .finally(() => setLoading(false));
+//   }, []);
 
-  return { items, loading };
-}
+//   return { items, loading };
+// }
 
-export function useItem(id: string) {
-  const [item, setItem] = useState<ItemResponse | null>(null);
-  const [loading, setLoading] = useState(true);
+// export function useItem(id: string) {
+//   const [item, setItem] = useState<ItemResponse | null>(null);
+//   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    itemsApi.getById(id)
-      .then(setItem)
-      .finally(() => setLoading(false));
-  }, [id]);
+//   useEffect(() => {
+//     itemsApi.getById(id)
+//       .then(setItem)
+//       .finally(() => setLoading(false));
+//   }, [id]);
 
-  return { item, loading };
-}
+//   return { item, loading };
+// }

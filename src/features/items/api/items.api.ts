@@ -13,15 +13,9 @@ export const itemsApi = {
     return data; // { content, page }
   },
 
-  // convenience: if you only want the array of items
-  getAllItemsOnly: async (params?: { page?: number; size?: number }): Promise<ItemResponse[]> => {
-    const { data } = await api.get<ItemPage>("/items", {
-      params: {
-        page: params?.page ?? 0,
-        size: params?.size ?? 20,
-      },
-    });
-    return data.content;
+  getTopRecommended: async (): Promise<ItemFullResponse[]> => {
+    const { data } = await api.get<ItemFullResponse[]>("/items/top-recommended");
+    return data;
   },
 
   getById: async (id: string): Promise<ItemResponse> => {

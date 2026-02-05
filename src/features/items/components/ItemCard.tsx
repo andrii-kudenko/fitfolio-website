@@ -2,11 +2,11 @@
 
 import Image from 'next/image';
 import { Star, Eye, MessageCircle } from 'lucide-react';
-import { ItemResponse } from '../types/items.types';
+import { ItemFullResponse, ItemResponse } from '../types/items.types';
 import Link from 'next/link';
 
 interface ItemCardProps {
-  item: ItemResponse;
+  item: ItemFullResponse;
 }
 
 function formatCount(count: number): string {
@@ -18,15 +18,15 @@ function formatCount(count: number): string {
 
 export default function ItemCard({ item }: ItemCardProps) {
   return (
-    <Link href={`/items/${item.slug}`} className="block">
-      <div className="w-[260px] min-h-[260px] h-full bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity">
+    <Link href={`/items/${item.item.slug}`} className="block">
+      <div className="min-w-[320px] min-h-[260px] h-full bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity">
         {/* Product Image */}
-        <div className="relative min-h-[160px] w-full flex-shrink-0 overflow-hidden">
+        <div className="relative min-h-[200px] w-full flex-shrink-0 overflow-hidden">
           <Image
-            src={item.imageUrl ? item.imageUrl : '/tnf-jacket.jpg'}
-            alt={item.name}
+            src={item.item.imageUrl ? item.item.imageUrl : '/tnf-jacket.jpg'}
+            alt={item.item.name}
             fill
-            className="h-full w-full scale-170 object-contain hover:scale-120 transition-all duration-700"
+            className="h-full w-full scale-150 object-contain hover:scale-120 transition-all duration-700"
             sizes="208px"
             
           />
@@ -36,16 +36,16 @@ export default function ItemCard({ item }: ItemCardProps) {
         <div className="flex-1 flex flex-col justify-between py-3">
           {/* Title */}
           <h3 className="text-white text-[16px] font-medium line-clamp-2 mb-3 text-center truncate">
-            {item.name}
+            {item.item.name}
           </h3>
 
           {/* Engagement Metrics */}
           <div className="flex items-center justify-center gap-4">
-            {/* Like Count / Rating */}
+            {/* Rating (or like count fallback) */}
             <div className="flex flex-col items-center gap-1">
               <Star className="w-[26px] h-[26px] text-ff-cyan" strokeWidth={1.5} />
               <span className="text-white text-[14px]">
-                {formatCount(item.likeCount)}
+                {item.item.rating != null ? Number(item.item.rating).toFixed(1) : formatCount(item.item.likeCount)}
               </span>
             </div>
 
@@ -53,7 +53,7 @@ export default function ItemCard({ item }: ItemCardProps) {
             <div className="flex flex-col items-center gap-1">
               <Eye className="w-[26px] h-[26px] text-ff-cyan" strokeWidth={1.5} />
               <span className="text-white text-[14px]">
-                {formatCount(item.viewCount)}
+                {formatCount(item.item.viewCount)}
               </span>
             </div>
 
@@ -61,7 +61,7 @@ export default function ItemCard({ item }: ItemCardProps) {
             <div className="flex flex-col items-center gap-1">
               <MessageCircle className="w-[26px] h-[26px] text-ff-cyan" strokeWidth={1.5} />
               <span className="text-white text-[14px]">
-                {formatCount(item.commentCount)}
+                {formatCount(item.item.commentCount)}
               </span>
             </div>
           </div>
