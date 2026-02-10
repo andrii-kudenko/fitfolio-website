@@ -7,7 +7,6 @@ import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ItemFullResponse, ItemResponse } from "@/features/items/types/items.types";
 import { itemsApi } from "@/features/items/api/items.api";
-import BeltIcon from "@/features/categories/components/BeltIcon";
 
 // const recommendedItems: ItemFullResponse[] = [
 //   {
