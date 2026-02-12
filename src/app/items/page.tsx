@@ -54,7 +54,7 @@ function buildUrlString(state: {
   page: number;
 }) {
   const params = new URLSearchParams();
-  if (state.query.trim()) params.set("q", state.query.trim());
+  if (state.query) params.set("q", state.query);
   state.selectedBrandIds.forEach((id) => params.append("brandIds", id));
   state.selectedCategoryIds.forEach((id) => params.append("categoryIds", id));
   state.selectedColors.forEach((c) => params.append("colors", c));
@@ -294,13 +294,13 @@ function ItemsPageContent() {
           {/* Main content */}
           <div className="flex-1">
             <div className="flex flex-wrap items-center gap-4 mb-8">
-              <input
+              {/* <input
                 type="text"
                 placeholder="Search items..."
                 value={state.query}
                 onChange={(e) => handleQueryChange(e.target.value)}
                 className="px-4 py-2 bg-white/5 border border-white/20 rounded-lg text-white placeholder:text-white/40 outline-none focus:border-ff-cyan min-w-[200px]"
-              />
+              /> */}
 
               <div className="ml-auto flex items-center gap-2">
                 <span className="text-white/60 text-sm font-medium">SORT BY</span>

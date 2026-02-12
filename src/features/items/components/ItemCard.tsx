@@ -19,7 +19,7 @@ function formatCount(count: number): string {
 export default function ItemCard({ item }: ItemCardProps) {
   return (
     <Link href={`/items/${item.item.slug}`} className="block">
-      <div className="min-w-[320px] min-h-[260px] h-full bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity">
+      <div className="min-w-[120px] min-h-[260px] h-full bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity">
         {/* Product Image */}
         <div className="relative min-h-[200px] w-full flex-shrink-0 overflow-hidden">
           <Image

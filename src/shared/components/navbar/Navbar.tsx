@@ -53,6 +53,26 @@ export default function FitFolioNavbarDesktop({
   const searchParams = useSearchParams();
   const isItemsPage = pathname === "/items";
   const itemsPageQuery = isItemsPage ? (searchParams.get("q") ?? "") : "";
+  const hasHydratedItemsInputRef = useRef(false);
+
+  // Hydrate input from URL only when first landing on /items (not while typing)
+  useEffect(() => {
+    if (isItemsPage) {
+      if (!hasHydratedItemsInputRef.current) {
+        hasHydratedItemsInputRef.current = true;
+        setItemsPageInput(itemsPageQuery);
+      }
+    } else {
+      hasHydratedItemsInputRef.current = false;
+    }
+  }, [isItemsPage, itemsPageQuery]);
+
+  // Clear URL update timer on unmount
+  useEffect(() => {
+    return () => {
+      if (itemsPageUrlUpdateTimer.current) clearTimeout(itemsPageUrlUpdateTimer.current);
+    };
+  }, []);
   const [open, setOpen] = useState(false);
   // Internal state for search if not controlled by parent
   const [internalSearching, setInternalSearching] = useState(false);
@@ -65,7 +85,9 @@ export default function FitFolioNavbarDesktop({
   const searchInputRef = useRef<HTMLInputElement | null>(null);
   const searchIconBtnRef = useRef<HTMLButtonElement | null>(null);
   const [searchInput, setSearchInput] = useState("");
+  const [itemsPageInput, setItemsPageInput] = useState("");
   const [searchResults, setSearchResults] = useState<ItemSearchResult[]>([]);
+  const itemsPageUrlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const [displayName, setDisplayName] = useState<string>("");
 
@@ -315,7 +337,6 @@ export default function FitFolioNavbarDesktop({
     }, 100);
   };
 
-  console.log("isSearching right now: ", isSearching);
 
   return (
     <header className={`top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ${isItemsPage ? "relative" : "sticky"}`}>
@@ -398,14 +419,19 @@ export default function FitFolioNavbarDesktop({
                       type="text"
                       placeholder="Nike Jordan"
                       className="w-full h-12 px-4 rounded-full bg-[#000500] text-white placeholder:text-white/40 outline-none  ring-2 ring-ff-cyan transition duration-300"
-                      value={itemsPageQuery}
+                      value={itemsPageInput}
                       onChange={(e) => {
                         const q = e.target.value;
-                        const params = new URLSearchParams(searchParams.toString());
-                        if (q.trim()) params.set("q", q);
-                        else params.delete("q");
-                        const query = params.toString();
-                        router.replace(query ? `/items?${query}` : "/items");
+                        setItemsPageInput(q);
+                        if (itemsPageUrlUpdateTimer.current) clearTimeout(itemsPageUrlUpdateTimer.current);
+                        itemsPageUrlUpdateTimer.current = setTimeout(() => {
+                          itemsPageUrlUpdateTimer.current = null;
+                          const params = new URLSearchParams(searchParams.toString());
+                          if (q.trim()) params.set("q", q);
+                          else params.delete("q");
+                          const query = params.toString();
+                          router.replace(query ? `/items?${query}` : "/items");
+                        }, 150);
                       }}
                       aria-label="Search items"
                     />
