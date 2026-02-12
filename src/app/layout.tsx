@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { Suspense } from "react";
 import { Geist, Geist_Mono } from "next/font/google";
 import "@/shared/styles/globals.css";
 import NavbarWrapper from "@/shared/components/navbar/NavbarWrapper";
@@ -29,7 +30,9 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-black text-white`}
       >
-        <NavbarWrapper isAuthenticated={false} />
+        <Suspense fallback={<div className="h-14" />}>
+          <NavbarWrapper isAuthenticated={false} />
+        </Suspense>
         <ScrollToTop />
 
         {/* Page content (Home, Profile, Items, etc.) */}
