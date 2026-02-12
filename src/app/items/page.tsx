@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronRight, ChevronDown } from "lucide-react";
@@ -65,7 +65,7 @@ function buildUrlString(state: {
   return params.toString();
 }
 
-export default function ItemsPage() {
+function ItemsPageContent() {
   const searchParams = useSearchParams();
   const urlState = useMemo(() => parseUrlState(searchParams), [searchParams]);
 
@@ -165,13 +165,6 @@ export default function ItemsPage() {
     () => items.map(itemSearchResultToItemFullResponse),
     [items]
   );
-
-  console.log("itemFullResponses", itemFullResponses);
-  console.log("items", items);
-
-  console.log("facets", facets);
-  console.log("state", state);
-  console.log("categories", categories);
 
   return (
     <main className="bg-black text-white pt-8">
@@ -374,5 +367,19 @@ export default function ItemsPage() {
         </div>
       </div>
     </main>
+  );
+}
+
+export default function ItemsPage() {
+  return (
+    <Suspense fallback={
+      <main className="bg-black text-white pt-8">
+        <div className="max-w-7xl mx-auto px-4 py-8">
+          <div className="h-96 animate-pulse bg-white/5 rounded-lg" />
+        </div>
+      </main>
+    }>
+      <ItemsPageContent />
+    </Suspense>
   );
 }
