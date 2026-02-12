@@ -120,29 +120,35 @@ export default function FitFolioNavbarDesktop({
     return () => document.removeEventListener("keydown", onKey);
   }, [isSearching, onSearch]);
 
-  // Search items when input changes
+  // Search items when input changes (debounced 300ms + AbortController for stale requests)
+  const searchAbortRef = useRef<AbortController | null>(null);
   useEffect(() => {
-    let isCancelled = false;
-    
-    if (searchInput.trim()) {
-      searchApi.search({ query: searchInput, limit: 10 })
-        .then(results => {
-          if (!isCancelled) {
-            setSearchResults(results);
-          }
-        })
-        .catch(error => {
-          console.error("Search error:", error);
-          if (!isCancelled) {
+    if (!searchInput.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      if (searchAbortRef.current) searchAbortRef.current.abort();
+      searchAbortRef.current = new AbortController();
+      const signal = searchAbortRef.current.signal;
+
+      searchApi
+        .search({ query: searchInput, limit: 10 }, signal)
+        .then(setSearchResults)
+        .catch((err) => {
+          if (err.name !== "AbortError") {
+            console.error("Search error:", err);
             setSearchResults([]);
           }
         });
-    } else {
-      setSearchResults([]);
-    }
-    
+    }, 300);
+
     return () => {
-      isCancelled = true;
+      clearTimeout(timer);
+      if (searchAbortRef.current) {
+        searchAbortRef.current.abort();
+      }
     };
   }, [searchInput]);
 
@@ -444,50 +450,50 @@ export default function FitFolioNavbarDesktop({
                         </button>                      
                       </div>
                       
-                      <div className=" py-2 max-h-[500px] w-full flex flex-col gap-2 overflow-y-auto scrollbar-hide">
-                        
-                      {searchResults.length === 0 ? (
-                        <div className="bg-black w-full rounded-3xl px-6 py-6 text-center">
-                          <p className="text-white/60 w-full">No items found. Try a different search.</p>
-                        </div>
-                      ) : (
-                        searchResults.map((item) => {
-                          const imageUrl = item.imageUrl || '/nike-shoes.jpg';
-                          const price = item.price ? `$${item.price.toFixed(2)}` : 'Price not available';
-                          
-                          return (
-                            <button
-                              key={item.id}
-                              className="bg-black w-full flex items-center
-                              px-3 py-3 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
-                              onClick={() => handleSearchResultClick(item)}
-                            >
-                              <div className="rounded-xl bg-white/6 overflow-hidden flex-shrink-0">
-                                <Image 
-                                  src={imageUrl} 
-                                  alt={item.name} 
-                                  width={80} 
-                                  height={80}
-                                  className="object-cover"
-                                  onError={(e) => {
-                                    // Fallback to default image if image fails to load
-                                    e.currentTarget.src = '/nike-shoes.jpg';
-                                  }}
-                                />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-[20px] text-white truncate">{item.name}<span className="text-[16px] text-white/70"> ~{price}</span></p>
-                                
-                                {item.description && (
-                                  <p className="text-[14px] text-white/50 mt-1 line-clamp-2">
-                                    {item.description.substring(0, 100)}...
-                                  </p>
-                                )}
-                              </div>
-                            </button>
-                          );
-                        })
-                      )}
+                      {/* Search Output Container */}
+                      <div className=" py-2 max-h-[500px] w-full flex flex-col gap-2 overflow-y-auto scrollbar-hide">                        
+                        {searchResults.length === 0 ? (
+                          <div className="bg-black w-full rounded-3xl px-6 py-6 text-center">
+                            <p className="text-white/60 w-full">No items found. Try a different search.</p>
+                          </div>
+                        ) : (
+                          searchResults.map((item) => {
+                            const imageUrl = item.imageUrl || '/nike-shoes.jpg';
+                            const price = item.price ? `$${item.price.toFixed(2)}` : 'Price not available';
+                            
+                            return (
+                              <button
+                                key={item.id}
+                                className="bg-black w-full flex items-center
+                                px-3 py-3 rounded-3xl gap-4 hover:bg-[#1a2332] transition-colors cursor-pointer"
+                                onClick={() => handleSearchResultClick(item)}
+                              >
+                                <div className="rounded-xl bg-white/6 overflow-hidden flex-shrink-0">
+                                  <Image 
+                                    src={imageUrl} 
+                                    alt={item.name} 
+                                    width={80} 
+                                    height={80}
+                                    className="object-cover"
+                                    onError={(e) => {
+                                      // Fallback to default image if image fails to load
+                                      e.currentTarget.src = '/nike-shoes.jpg';
+                                    }}
+                                  />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <p className="text-[20px] text-white truncate">{item.name}<span className="text-[16px] text-white/70"> ~{price}</span></p>
+                                  
+                                  {item.description && (
+                                    <p className="text-[14px] text-white/50 mt-1 line-clamp-2">
+                                      {item.description.substring(0, 100)}...
+                                    </p>
+                                  )}
+                                </div>
+                              </button>
+                            );
+                          })
+                        )}
                       </div>
                     </div>
                   )}
