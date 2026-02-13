@@ -2,11 +2,11 @@
 
 import { useRef, useState, useEffect } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
-import { ItemResponse } from '../types/items.types';
+import { ItemFullResponse, ItemResponse } from '../types/items.types';
 import ItemCard from './ItemCard';
 
 interface ScrollableItemListProps {
-  items: ItemResponse[];
+  items: ItemFullResponse[];
   title: string;
 }
 
@@ -75,7 +75,7 @@ export default function ScrollableItemList({ items, title }: ScrollableItemListP
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {items.map((item) => (
-            <ItemCard key={item.id} item={item} />
+            <ItemCard key={item.item.id} item={item} />
           ))}
         </div>
 

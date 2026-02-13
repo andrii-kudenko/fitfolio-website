@@ -1,24 +1,101 @@
 import { api } from "@/shared/lib/api";
-import { ItemSearchResult } from "../types/search.types";
+import {
+  ItemSearchResult,
+  SearchFacetsResponse,
+  SearchSort,
+} from "../types/search.types";
 
 export interface SearchParams {
   query: string;
   limit?: number;
 }
 
+export interface SearchWithFiltersParams {
+  query?: string;
+  brandIds?: string[];
+  categoryIds?: string[];
+  colors?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+  sort?: SearchSort;
+  limit?: number;
+  offset?: number;
+}
+
+export interface SearchFacetsParams {
+  query?: string;
+  brandIds?: string[];
+  categoryIds?: string[];
+  colors?: string[];
+  minPrice?: number;
+  maxPrice?: number;
+}
+
 export const searchApi = {
   /**
-   * Search items using the backend search API
-   * @param params - Search parameters including query string and optional limit
-   * @returns Array of search results with similarity scores
+   * Simple search: query + limit only. Uses semantic similarity.
+   * GET /api/search
    */
-  search: async (params: SearchParams): Promise<ItemSearchResult[]> => {
+  search: async (
+    params: SearchParams,
+    signal?: AbortSignal
+  ): Promise<ItemSearchResult[]> => {
     const { data } = await api.get<ItemSearchResult[]>("/search", {
       params: {
         query: params.query,
         limit: params.limit ?? 20,
       },
+      signal,
     });
+    return data;
+  },
+
+  /**
+   * Search with filters: query, brands, categories, colors, price, sort, pagination.
+   * GET /api/search/with-filters
+   */
+  searchWithFilters: async (
+    params: SearchWithFiltersParams,
+    signal?: AbortSignal
+  ): Promise<ItemSearchResult[]> => {
+    const q = new URLSearchParams();
+    if (params.query?.trim()) q.set("query", params.query.trim());
+    params.brandIds?.forEach((id) => q.append("brandIds", id));
+    params.categoryIds?.forEach((id) => q.append("categoryIds", id));
+    params.colors?.forEach((c) => q.append("colors", c));
+    if (params.minPrice != null) q.set("minPrice", String(params.minPrice));
+    if (params.maxPrice != null) q.set("maxPrice", String(params.maxPrice));
+    q.set("sort", params.sort ?? "RELEVANCE");
+    q.set("limit", String(params.limit ?? 20));
+    q.set("offset", String(params.offset ?? 0));
+
+    const { data } = await api.get<ItemSearchResult[]>(
+      `/search/with-filters?${q.toString()}`,
+      { signal }
+    );
+    return data;
+  },
+
+  /**
+   * Get facets (available filter options + counts + min/max price).
+   * GET /api/search/filters
+   */
+  getFacets: async (
+    params: SearchFacetsParams,
+    signal?: AbortSignal
+  ): Promise<SearchFacetsResponse> => {
+    const q = new URLSearchParams();
+    if (params.query?.trim()) q.set("query", params.query.trim());
+    params.brandIds?.forEach((id) => q.append("brandIds", id));
+    params.categoryIds?.forEach((id) => q.append("categoryIds", id));
+    params.colors?.forEach((c) => q.append("colors", c));
+    if (params.minPrice != null) q.set("minPrice", String(params.minPrice));
+    if (params.maxPrice != null) q.set("maxPrice", String(params.maxPrice));
+
+    const { data } = await api.get<SearchFacetsResponse>(
+      `/search/filters?${q.toString()}`,
+      { signal }
+    );
     return data;
   },
 };
