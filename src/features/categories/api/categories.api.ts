@@ -14,7 +14,7 @@ export const categoriesApi = {
     const { data } = await api.get<CategoryPage>("/categories", {
       params: {
         page: params?.page ?? 0,
-        size: params?.size ?? 50,
+        size: params?.size ?? 150,
         ...(params?.sort ? { sort: params.sort } : {}),
       },
     });

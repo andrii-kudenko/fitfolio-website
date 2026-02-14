@@ -1,8 +1,10 @@
 import { api } from "@/shared/lib/api";
 import type {
   TierListCreate,
+  TierListCreateWithTiers,
   TierListResponse,
   TierListPage,
+  TierListDetailResponse,
   TierListLikeCreate,
   TierListLikeResponse,
   TierCreate,
@@ -23,6 +25,29 @@ export const tierlistsApi = {
   ): Promise<TierListResponse> => {
     const { data } = await api.post<TierListResponse>(
       `/users/${userId}/tierlists`,
+      payload
+    );
+    return data;
+  },
+
+  createComplete: async (
+    userId: string,
+    payload: TierListCreateWithTiers
+  ): Promise<TierListResponse> => {
+    const { data } = await api.post<TierListResponse>(
+      `/users/${userId}/tierlists/complete`,
+      payload
+    );
+    return data;
+  },
+
+  updateComplete: async (
+    tierListId: string,
+    userId: string,
+    payload: TierListCreateWithTiers
+  ): Promise<TierListResponse> => {
+    const { data } = await api.put<TierListResponse>(
+      `/tierlists/${tierListId}?userId=${userId}`,
       payload
     );
     return data;
@@ -53,6 +78,13 @@ export const tierlistsApi = {
   getBySlug: async (slug: string): Promise<TierListResponse> => {
     const { data } = await api.get<TierListResponse>(
       `/tierlists/slug/${slug}`
+    );
+    return data;
+  },
+
+  getDetailBySlug: async (slug: string): Promise<TierListDetailResponse> => {
+    const { data } = await api.get<TierListDetailResponse>(
+      `/tierlists/slug/${slug}/detail`
     );
     return data;
   },

@@ -1,5 +1,5 @@
 import { api } from "@/shared/lib/api";
-import { ItemCreate, ItemResponse, ItemPage, PageMeta, ItemLikeResponse, ItemLikeCreate } from "../types/items.types";
+import { ItemCreate, ItemResponse, ItemPage, PageMeta, ItemLikeResponse, ItemLikeCreate, ItemFullResponse } from "../types/items.types";
 
 export const itemsApi = {
   // getAll with pagination support
@@ -13,15 +13,9 @@ export const itemsApi = {
     return data; // { content, page }
   },
 
-  // convenience: if you only want the array of items
-  getAllItemsOnly: async (params?: { page?: number; size?: number }): Promise<ItemResponse[]> => {
-    const { data } = await api.get<ItemPage>("/items", {
-      params: {
-        page: params?.page ?? 0,
-        size: params?.size ?? 20,
-      },
-    });
-    return data.content;
+  getTopRecommended: async (): Promise<ItemFullResponse[]> => {
+    const { data } = await api.get<ItemFullResponse[]>("/items/top-recommended");
+    return data;
   },
 
   getById: async (id: string): Promise<ItemResponse> => {
@@ -31,6 +25,11 @@ export const itemsApi = {
 
   getBySlug: async (slug: string): Promise<ItemResponse> => {
     const { data } = await api.get<ItemResponse>(`/items/slug/${slug}`);
+    return data;
+  },
+
+  getBySlugFull: async (slug: string): Promise<ItemFullResponse> => {
+    const { data } = await api.get<ItemFullResponse>(`/items/slug/${slug}/full`);
     return data;
   },
 

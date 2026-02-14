@@ -55,6 +55,21 @@ export const collectionsApi = {
     return data;
   },
 
+  update: async (
+    collectionId: string,
+    userId: string,
+    payload: CollectionCreate
+  ): Promise<CollectionResponse> => {
+    const { data } = await api.put<CollectionResponse>(
+      `/collections/${collectionId}`,
+      payload,
+      {
+        params: { userId },
+      }
+    );
+    return data;
+  },
+
   // ---------------------------------------------------------------------------
   // Likes
   // ---------------------------------------------------------------------------
