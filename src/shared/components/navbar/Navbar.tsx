@@ -91,6 +91,12 @@ export default function FitFolioNavbarDesktop({
   const [loggedInUser, setLoggedInUser] = useState<any>(null);
   const [displayName, setDisplayName] = useState<string>("");
 
+  const isAdmin =
+    loggedInUser?.role === "ADMIN" ||
+    loggedInUser?.roles?.includes?.("ADMIN") ||
+    loggedInUser?.isAdmin === true;
+
+
   // Close profile menu on outside click
   useEffect(() => {
     function onDocClick(e: MouseEvent) {
@@ -611,6 +617,16 @@ export default function FitFolioNavbarDesktop({
                           handleNavigate("/settings");
                         }}
                       />
+
+                      {isAdmin && (
+                        <MenuItem
+                          label="Admin"
+                          onClick={() => {
+                            setOpen(false);
+                            handleNavigate("/admin");
+                          }}
+                        />
+                      )}
 
                       <MenuItem
                         label="Log Out"
