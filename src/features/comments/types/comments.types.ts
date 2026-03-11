@@ -1,13 +1,22 @@
 import type { PageResult } from "@/shared/types/pagination";
 
-// ---- DTO mirrors ----
-
 // Java: CommentCreate
 export interface CommentCreate {
   userId: string;
   parentId?: string | null;
   subjectId: string;
-  subjectType: string; // "ITEM" | "COLLECTION" | "TIER_LIST" | ...
+  subjectType: string;
+  text: string;
+}
+
+// For Item endpoints
+export interface CommentCreateItem {
+  parentId?: string | null;
+  text: string;
+}
+
+// Java: CommentUpdate
+export interface CommentUpdate {
   text: string;
 }
 
@@ -15,12 +24,15 @@ export interface CommentCreate {
 export interface CommentResponse {
   id: string;
   userId: string;
+
+  userDisplayName?: string;
+
   parentId: string | null;
   subjectId: string;
   subjectType: string;
   text: string;
   likeCount: number;
-  deleted: boolean;        // note: matches Java 'deleted' field
+  isDeleted: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -28,14 +40,11 @@ export interface CommentResponse {
 export type CommentPage = PageResult<CommentResponse>;
 
 // ---- Likes ----
-
-// Java: CommentLikeCreate
 export interface CommentLikeCreate {
   userId: string;
   commentId: string;
 }
 
-// Java: CommentLikeResponse
 export interface CommentLikeResponse {
   id: string;
   userId: string;
@@ -43,27 +52,5 @@ export interface CommentLikeResponse {
   createdAt: string;
 }
 
-// Optional aliases to match your original names if you want
 export type Comment = CommentResponse;
 export type CommentLike = CommentLikeResponse;
-
-
-// export interface Comment {
-//     id: string;
-//     userId: string;
-//     parentId: string | null;
-//     subjectId: string;
-//     subjectType: string;
-//     text: string;
-//     likeCount: number;
-//     isDeleted: boolean;
-//     createdAt: string;
-//     updatedAt: string;
-// }
-
-// export interface CommentLike {
-//     id: string;
-//     userId: string;
-//     commentId: string;
-//     createdAt: string;
-// }
