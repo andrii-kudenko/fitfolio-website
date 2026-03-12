@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { ImageUpload } from "@/features/images/components/ImageUpload";
 
 type ProfileForm = {
   username: string;
   displayName: string;
   bio: string;
+  avatarObjectKey: string | null;
+  avatarPreviewUrl: string | null;
 };
 
 export default function ProfileSettingsPage() {
@@ -13,6 +16,8 @@ export default function ProfileSettingsPage() {
     username: "",
     displayName: "",
     bio: "",
+    avatarObjectKey: null,
+    avatarPreviewUrl: null,
   });
 
   const [message, setMessage] = useState<{ type: "ok" | "err"; text: string } | null>(null);
@@ -46,6 +51,8 @@ export default function ProfileSettingsPage() {
             username: data.username ?? "",
             displayName: data.displayName ?? "",
             bio: data.bio ?? "",
+            avatarObjectKey: data.avatarKey ?? null,
+            avatarPreviewUrl: data.avatarUrl ?? null,
           });
         } else {
           // If profile doesn't exist yet, just keep empty form
@@ -76,6 +83,7 @@ export default function ProfileSettingsPage() {
           username: form.username,
           displayName: form.displayName,
           bio: form.bio,
+          avatarUrl: form.avatarObjectKey,
         }),
       });
 
@@ -143,6 +151,22 @@ export default function ProfileSettingsPage() {
           onChange={(e) => setForm({ ...form, bio: e.target.value })}
           placeholder="Tell people about your style..."
           disabled={loading}
+        />
+      </div>
+
+      <div className="flex flex-col gap-1">
+        <label className="text-sm font-semibold text-white">Avatar</label>
+        <ImageUpload
+          context="profile"
+          entityId={getLoggedInUser()?.id}
+          onUploadSuccess={(objectKey, previewUrl) =>
+            setForm((f) => ({
+              ...f,
+              avatarObjectKey: objectKey,
+              avatarPreviewUrl: previewUrl,
+            }))
+          }
+          currentPreview={form.avatarPreviewUrl}
         />
       </div>
 

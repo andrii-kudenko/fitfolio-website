@@ -345,7 +345,7 @@ export default function FitFolioNavbarDesktop({
 
 
   return (
-    <header className={`top-0 z-50 w-full bg-ff-black backdrop-blur supports-[backdrop-filter]:bg-ff-black/80 ${isItemsPage ? "relative" : "sticky"}`}>
+    <header className={`top-0 z-50 w-full bg-black backdrop-blur  ${isItemsPage ? "relative" : "sticky"}`}>
       <div className="mx-auto flex items-center justify-between px-8 relative py-3">
         {/* Left spacer for centering */}
         <div className="flex-1"></div>
