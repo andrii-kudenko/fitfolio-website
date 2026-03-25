@@ -10,6 +10,7 @@ import { reviewsApi } from '@/features/reviews/api/reviews.api';
 import { ReviewResponse, ReviewPage } from '@/features/reviews/types/reviews.types';
 import { usersApi } from '@/features/users/api/users.api';
 import { UserProfileResponse, FitProfileResponse } from '@/features/users/types/users.types';
+import CommentsSection from '@/features/comments/CommentsSection';
 
 // Mock related items
 const mockRelatedItems = [
@@ -419,25 +420,6 @@ export default function ItemPage() {
                       )
                     )}
                   </div>
-
-                  {/* Action Buttons */}
-                  <div className="flex gap-4 pt-4">
-                    {loading ? (
-                      <>
-                        <Skeleton className="flex-1 h-12 rounded-lg" />
-                        <Skeleton className="flex-1 h-12 rounded-lg" />
-                      </>
-                    ) : (
-                      <>
-                        <button className="flex-1 px-6 py-3 bg-ff-cyan text-black font-medium rounded-lg hover:bg-ff-cyan/90 transition">
-                          Read reviews
-                        </button>
-                        <button className="flex-1 px-6 py-3 border-2 border-white/20 text-white font-medium rounded-lg hover:border-white/40 transition">
-                          Read Comments
-                        </button>
-                      </>
-                    )}
-                  </div>
                 </div>
               </div>
             </section>
@@ -738,10 +720,8 @@ export default function ItemPage() {
             </>
           )}
 
-          {activeTab === 'comments' && (
-            <div className="text-center py-12 text-white/60">
-              Comments section coming soon...
-            </div>
+          {activeTab === 'comments' && item?.item?.id && (
+            <CommentsSection itemId={item.item.id} />
           )}
         </section>
           </>
