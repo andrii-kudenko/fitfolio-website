@@ -252,7 +252,7 @@ export default function Home() {
         /> */}
       
       {/* Hero Section */}
-      <section className="h-[100vh] bg-ff-black flex items-center justify-center">
+      <section className="h-[100vh] bg-black flex items-center justify-center">
         {/* <div className={`absolute top-0 left-0 w-full h-full ${isSearching ? " bg-black/70" : ""}`}></div> */}
         <div className="text-center max-w-4xl mx-auto">
           {/* Main Heading */}

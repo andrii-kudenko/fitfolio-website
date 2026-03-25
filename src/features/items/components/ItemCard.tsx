@@ -19,14 +19,15 @@ function formatCount(count: number): string {
 export default function ItemCard({ item }: ItemCardProps) {
   return (
     <Link href={`/items/${item.item.slug}`} className="block">
-      <div className="min-w-[120px] min-h-[260px] h-full bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity">
+      <div className="w-[260px] min-h-[260px] h-full bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity">
         {/* Product Image */}
         <div className="relative min-h-[200px] w-full flex-shrink-0 overflow-hidden">
           <Image
             src={item.item.imageUrl ? item.item.imageUrl : '/tnf-jacket.jpg'}
             alt={item.item.name}
             fill
-            className="h-full w-full scale-150 object-contain hover:scale-120 transition-all duration-700"
+            // className="h-full w-full scale-150 object-contain hover:scale-120 transition-all duration-700"
+            className="object-contain"
             sizes="208px"
             
           />

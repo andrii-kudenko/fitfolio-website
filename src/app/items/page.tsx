@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { ChevronRight, ChevronDown } from "lucide-react";
 import { useSearch } from "@/features/search/hooks/useSearch";
+import { useSmartSearch } from "@/features/search/hooks/useSmartSearch";
 import { itemSearchResultToItemFullResponse } from "@/features/search/utils/itemSearchResultToItemFullResponse";
 import type { SearchSort } from "@/features/search/types/search.types";
 import ItemCard from "@/features/items/components/ItemCard";
@@ -21,11 +22,15 @@ const SORT_OPTIONS: { value: SearchSort; label: string }[] = [
   { value: "RATING", label: "HIGHEST RATING" },
 ];
 
+const DEPARTMENTS = ["men", "women", "unisex"] as const;
+
 function parseUrlState(searchParams: URLSearchParams) {
   const q = searchParams.get("q") ?? "";
+  const mode = searchParams.get("mode") === "smart" ? "smart" : "filters";
   const brandIds = searchParams.getAll("brandIds").filter(Boolean);
   const categoryIds = searchParams.getAll("categoryIds").filter(Boolean);
   const colors = searchParams.getAll("colors").filter(Boolean);
+  const departments = searchParams.getAll("departments").filter(Boolean);
   const minPrice = searchParams.get("minPrice");
   const maxPrice = searchParams.get("maxPrice");
   const sort = (searchParams.get("sort") ?? "RELEVANCE") as SearchSort;
@@ -33,9 +38,11 @@ function parseUrlState(searchParams: URLSearchParams) {
 
   return {
     query: q,
+    mode,
     selectedBrandIds: brandIds,
     selectedCategoryIds: categoryIds,
     selectedColors: colors,
+    selectedDepartments: departments,
     minPrice: minPrice ? parseFloat(minPrice) : undefined,
     maxPrice: maxPrice ? parseFloat(maxPrice) : undefined,
     sort,
@@ -45,9 +52,11 @@ function parseUrlState(searchParams: URLSearchParams) {
 
 function buildUrlString(state: {
   query: string;
+  mode?: "smart" | "filters";
   selectedBrandIds: string[];
   selectedCategoryIds: string[];
   selectedColors: string[];
+  selectedDepartments: string[];
   minPrice?: number;
   maxPrice?: number;
   sort: SearchSort;
@@ -55,9 +64,11 @@ function buildUrlString(state: {
 }) {
   const params = new URLSearchParams();
   if (state.query) params.set("q", state.query);
+  if (state.mode === "smart") params.set("mode", "smart");
   state.selectedBrandIds.forEach((id) => params.append("brandIds", id));
   state.selectedCategoryIds.forEach((id) => params.append("categoryIds", id));
   state.selectedColors.forEach((c) => params.append("colors", c));
+  state.selectedDepartments.forEach((d) => params.append("departments", d));
   if (state.minPrice != null) params.set("minPrice", String(state.minPrice));
   if (state.maxPrice != null) params.set("maxPrice", String(state.maxPrice));
   if (state.sort !== "RELEVANCE") params.set("sort", state.sort);
@@ -68,9 +79,18 @@ function buildUrlString(state: {
 function ItemsPageContent() {
   const searchParams = useSearchParams();
   const urlState = useMemo(() => parseUrlState(searchParams), [searchParams]);
+  const isSmartMode = urlState.mode === "smart";
 
   const [brands, setBrands] = useState<BrandResponse[]>([]);
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
+
+  const smartSearch = useSmartSearch(urlState.query);
+
+  useEffect(() => {
+    if (isSmartMode && urlState.query) {
+      smartSearch.search(urlState.query);
+    }
+  }, [isSmartMode, urlState.query, smartSearch.search]);
 
   const {
     items,
@@ -82,6 +102,7 @@ function ItemsPageContent() {
     setSelectedBrandIds,
     setSelectedCategoryIds,
     setSelectedColors,
+    setSelectedDepartments,
     setMinPrice,
     setMaxPrice,
     setSort,
@@ -98,6 +119,7 @@ function ItemsPageContent() {
       JSON.stringify(prev.selectedBrandIds) === JSON.stringify(urlState.selectedBrandIds) &&
       JSON.stringify(prev.selectedCategoryIds) === JSON.stringify(urlState.selectedCategoryIds) &&
       JSON.stringify(prev.selectedColors) === JSON.stringify(urlState.selectedColors) &&
+      JSON.stringify(prev.selectedDepartments) === JSON.stringify(urlState.selectedDepartments) &&
       prev.minPrice === urlState.minPrice &&
       prev.maxPrice === urlState.maxPrice &&
       prev.sort === urlState.sort &&
@@ -108,21 +130,24 @@ function ItemsPageContent() {
     setSelectedBrandIds(urlState.selectedBrandIds);
     setSelectedCategoryIds(urlState.selectedCategoryIds);
     setSelectedColors(urlState.selectedColors);
+    setSelectedDepartments(urlState.selectedDepartments);
     setMinPrice(urlState.minPrice);
     setMaxPrice(urlState.maxPrice);
     setSort(urlState.sort);
     setPage(urlState.page);
   }, [urlState]);
 
-  // Sync state -> URL when state changes
+  // Sync state -> URL when state changes (always preserve mode - never drop mode=smart when typing)
   useEffect(() => {
-    const str = buildUrlString(state);
+    const mode: "smart" | "filters" =
+      searchParams.get("mode") === "smart" || urlState.mode === "smart" ? "smart" : "filters";
+    const str = buildUrlString({ ...state, mode });
     const desired = str ? `?${str}` : "";
     const current = window.location.search;
     if (desired !== current) {
       window.history.replaceState(null, "", desired || "/items");
     }
-  }, [state]);
+  }, [state, urlState.mode]);
 
   // Load brands and categories for display names
   useEffect(() => {
@@ -161,6 +186,15 @@ function ItemsPageContent() {
     );
   };
 
+  const handleDepartmentToggle = (dept: string) => {
+    const lower = dept.toLowerCase();
+    setSelectedDepartments(
+      state.selectedDepartments.includes(lower)
+        ? state.selectedDepartments.filter((x) => x !== lower)
+        : [...state.selectedDepartments, lower]
+    );
+  };
+
   const itemFullResponses = useMemo(
     () => items.map(itemSearchResultToItemFullResponse),
     [items]
@@ -181,6 +215,30 @@ function ItemsPageContent() {
           </div>
         </nav>
 
+        {isSmartMode ? (
+          <div className="flex-1">
+            {smartSearch.error && (
+              <div className="text-red-400 text-sm mb-4">{smartSearch.error}</div>
+            )}
+            {smartSearch.isLoading ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <div key={i} className="w-[260px] min-h-[260px] bg-white/5 rounded-lg animate-pulse" />
+                ))}
+              </div>
+            ) : smartSearch.items.length === 0 ? (
+              <div className="text-center py-16 text-white/60">
+                {urlState.query ? "No items found. Try a different search (press Enter in the search bar above)." : "Type a search query above and press Enter."}
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+                {smartSearch.items.map((item) => (
+                  <ItemCard key={item.id} item={itemSearchResultToItemFullResponse(item)} />
+                ))}
+              </div>
+            )}
+          </div>
+        ) : (
         <div className="flex gap-8">
           {/* Filter sidebar */}
           <aside className="w-56 flex-shrink-0 space-y-6">
@@ -256,6 +314,35 @@ function ItemsPageContent() {
                     </div>
                   </div>
                 )}
+
+                <div>
+                  <div className="text-white text-sm font-medium mb-2">Department</div>
+                  <div className="flex flex-col gap-1">
+                    {DEPARTMENTS.map((dept) => {
+                      const facetDept = (facets.departments ?? []).find(
+                        (f) => f.value.toLowerCase() === dept
+                      );
+                      const count = facetDept?.count ?? 0;
+                      const label =
+                        dept.charAt(0).toUpperCase() + dept.slice(1);
+                      return (
+                        <label
+                          key={dept}
+                          className="flex items-center gap-2 cursor-pointer text-sm"
+                        >
+                          <input
+                            type="checkbox"
+                            checked={state.selectedDepartments.includes(dept)}
+                            onChange={() => handleDepartmentToggle(dept)}
+                            className="rounded border-white/20"
+                          />
+                          <span>{label}</span>
+                          <span className="text-white/50">({count})</span>
+                        </label>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 {(facets.minPrice != null || facets.maxPrice != null) && (
                   <div>
@@ -365,6 +452,7 @@ function ItemsPageContent() {
             )}
           </div>
         </div>
+        )}
       </div>
     </main>
   );

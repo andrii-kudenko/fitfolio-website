@@ -40,11 +40,12 @@ export interface UserCreate {
   //                                  int followersCount, int followingCount,
   //                                  int collectionsCount, int tierListsCount)
   export interface UserProfileResponse {
-    id: string;
+    id?: string;
     userId: string;
     username: string;
     bio: string | null;
     avatarUrl: string | null;
+    avatarKey?: string | null;
     isVerified: boolean;
     followersCount: number;
     followingCount: number;

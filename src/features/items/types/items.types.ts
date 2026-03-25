@@ -42,7 +42,7 @@ export interface ItemFullResponse {
   // Create payload (mirror your ItemCreate DTO)
   export interface ItemCreate {
     name: string;
-    status: string;
+    status?: string;
     slug?: string; // probably generated on backend, so optional here
     description?: string | null;
     sourceUrl?: string | null;
@@ -59,6 +59,15 @@ export interface ItemFullResponse {
     contributorId?: string | null;
     imageUrl?: string | null;
     details?: string[];
+    // Enrichment metadata (from OpenAI)
+    themesTags?: string[];
+    occasionsTags?: string[];
+    vibesTags?: string[];
+    stylesTags?: string[];
+    aestheticTags?: string[];
+    fitTags?: string[];
+    seasonTags?: string[];
+    functionTags?: string[];
   }
   
 
