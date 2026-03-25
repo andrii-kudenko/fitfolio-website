@@ -16,6 +16,7 @@ export interface UseSearchState {
   selectedBrandIds: string[];
   selectedCategoryIds: string[];
   selectedColors: string[];
+  selectedDepartments: string[];
   minPrice?: number;
   maxPrice?: number;
   sort: SearchSort;
@@ -33,6 +34,7 @@ export interface UseSearchResult {
   setSelectedBrandIds: (ids: string[]) => void;
   setSelectedCategoryIds: (ids: string[]) => void;
   setSelectedColors: (colors: string[]) => void;
+  setSelectedDepartments: (departments: string[]) => void;
   setMinPrice: (v: number | undefined) => void;
   setMaxPrice: (v: number | undefined) => void;
   setSort: (s: SearchSort) => void;
@@ -46,6 +48,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
     selectedBrandIds: [],
     selectedCategoryIds: [],
     selectedColors: [],
+    selectedDepartments: [],
     minPrice: undefined,
     maxPrice: undefined,
     sort: "RELEVANCE",
@@ -87,6 +90,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
           brandIds: s.selectedBrandIds.length ? s.selectedBrandIds : undefined,
           categoryIds: s.selectedCategoryIds.length ? s.selectedCategoryIds : undefined,
           colors: s.selectedColors.length ? s.selectedColors : undefined,
+          departments: s.selectedDepartments.length ? s.selectedDepartments : undefined,
           minPrice: s.minPrice,
           maxPrice: s.maxPrice,
           sort: s.sort,
@@ -125,12 +129,14 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
           brandIds: s.selectedBrandIds.length ? s.selectedBrandIds : undefined,
           categoryIds: s.selectedCategoryIds.length ? s.selectedCategoryIds : undefined,
           colors: s.selectedColors.length ? s.selectedColors : undefined,
+          departments: s.selectedDepartments.length ? s.selectedDepartments : undefined,
           minPrice: s.minPrice,
           maxPrice: s.maxPrice,
         },
         facetsAbortRef.current.signal
       )
       .then((data) => {
+        console.log("facets", data);
         if (id === facetsRequestIdRef.current) setFacets(data);
       })
       .catch((err) => {
@@ -177,6 +183,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
     state.selectedBrandIds,
     state.selectedCategoryIds,
     state.selectedColors,
+    state.selectedDepartments,
     state.minPrice,
     state.maxPrice,
   ]);
@@ -207,6 +214,10 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
     setState((s) => ({ ...s, selectedColors: colors, page: 0 }));
   }, []);
 
+  const setSelectedDepartments = useCallback((departments: string[]) => {
+    setState((s) => ({ ...s, selectedDepartments: departments, page: 0 }));
+  }, []);
+
   const setMinPrice = useCallback((v: number | undefined) => {
     setState((s) => ({ ...s, minPrice: v, page: 0 }));
   }, []);
@@ -233,6 +244,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
     setSelectedBrandIds,
     setSelectedCategoryIds,
     setSelectedColors,
+    setSelectedDepartments,
     setMinPrice,
     setMaxPrice,
     setSort,

@@ -45,6 +45,7 @@ export interface SearchFacetsResponse {
   brands: FacetValue<string>[];
   categories: FacetValue<string>[];
   colors: FacetValue<string>[];
+  departments: FacetValue<string>[];
   minPrice: number | null;
   maxPrice: number | null;
 }
@@ -54,9 +55,36 @@ export interface SearchState {
   selectedBrandIds: string[];
   selectedCategoryIds: string[];
   selectedColors: string[];
+  selectedDepartments: string[];
   minPrice?: number;
   maxPrice?: number;
   sort: SearchSort;
   page: number;
   limit: number;
+}
+
+/** Parsed search result from Smart Search backend */
+export interface ParsedSearchObject {
+  rawQuery: string;
+  normalizedQuery: string;
+  brandIds: string[];
+  brandNames: string[];
+  categoryIds: string[];
+  categoryNames: string[];
+  colors: string[];
+  departments: string[];
+  themes: string[];
+  occasions: string[];
+  vibes: string[];
+  styles: string[];
+  aesthetic: string[];
+  fit: string[];
+  season: string[];
+  function: string[];
+}
+
+/** Smart Search API response */
+export interface SmartSearchResponse {
+  parsed: ParsedSearchObject;
+  items: ItemSearchResult[];
 }
