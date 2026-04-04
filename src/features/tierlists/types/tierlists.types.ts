@@ -96,6 +96,16 @@ export interface TierResponse {
   position: number;
 }
 
+export interface TierListWithTiers extends TierListResponse {
+  tiers: Array<{
+    tier: TierResponse;
+    items: Array<{
+      id: string;
+      imageUrl?: string;
+    }>;
+  }>;
+}
+
 // ---------------------------------------------------------------------------
 // TierListItem DTO mirrors
 // ---------------------------------------------------------------------------

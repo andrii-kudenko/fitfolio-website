@@ -38,7 +38,7 @@ export default function ScrollableItemList({ items, title }: ScrollableItemListP
 
   const scroll = (direction: 'left' | 'right') => {
     if (scrollContainerRef.current) {
-      const scrollAmount = 700; // Adjust this value to control scroll distance
+      const scrollAmount = 800; // ~2–3 cards at w-[min(85vw,320px)] + gap
       const currentScroll = scrollContainerRef.current.scrollLeft;
       const newScroll = direction === 'right' 
         ? currentScroll + scrollAmount 
@@ -52,7 +52,7 @@ export default function ScrollableItemList({ items, title }: ScrollableItemListP
   };
 
   return (
-    <div className="w-full relative">
+    <div className="w-full relative ">
       <h2 className="text-[30px] font-medium text-white mb-6">{title}</h2>
       
       <div className="relative">
@@ -60,18 +60,18 @@ export default function ScrollableItemList({ items, title }: ScrollableItemListP
         {canScrollLeft && (
           <button
             onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 transform -translate-x-1/2
-            bg-ff-black/80 hover:bg-ff-black rounded-full p-2 transition-opacity"
+              className="absolute left-[20px] top-1/2 -translate-y-1/2 z-10 transform -translate-x-1/2 rounded-full
+              bg-black/90 hover:bg-ff-black/80 p-2 transition-opacity"
             aria-label="Scroll left"
           >
-            <ChevronLeft className="w-[40px] h-[40px] text-white" />
+            <ChevronLeft className="w-[20px] h-[40px] text-white" />
           </button>
         )}
 
         {/* Scrollable Container */}
         <div
           ref={scrollContainerRef}
-          className="flex gap-10 overflow-x-auto scrollbar-hide scroll-smooth"
+          className="flex gap-6 overflow-x-auto scrollbar-hide scroll-smooth"
           style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {items.map((item) => (
@@ -83,12 +83,12 @@ export default function ScrollableItemList({ items, title }: ScrollableItemListP
         {canScrollRight && (
           <button
             onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10
-            transform translate-x-1/2
-            bg-ff-black/80 hover:bg-ff-black rounded-full p-2 transition-opacity"
+            className="absolute right-[20px] top-1/2 -translate-y-1/2 z-10
+            transform translate-x-1/2 rounded-full
+            bg-black/90 hover:bg-ff-black/80 p-2 transition-opacity"
             aria-label="Scroll right"
           >
-            <ChevronRight className="w-[40px] h-[40px] text-white" />
+            <ChevronRight className="w-[20px] h-[40px] text-white" />
           </button>
         )}
       </div>

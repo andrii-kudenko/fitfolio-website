@@ -1,20 +1,22 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { categoriesApi } from "@/features/categories/api/categories.api";
 import { brandsApi } from "@/features/brands/api/brands.api";
 import { imagesApi } from "@/features/images/api/images.api";
+import { fileToNormalizedJpeg } from "@/features/images/lib/normalizeImageFile";
 import { enrichmentApi } from "@/features/enrichment/api/enrichment.api";
 import { itemsApi } from "@/features/items/api/items.api";
 import type { CategoryResponse } from "@/features/categories/types/categories.types";
 import type { BrandResponse } from "@/features/brands/types/brands.types";
 import type { ItemCreate } from "@/features/items/types/items.types";
 import { ITEM_FILTER_COLORS } from "@/features/items/constants/colors";
+import { ITEM_IMAGE_STORE_SIZE_PX } from "@/features/items/constants/imageUpload";
 
 const DEPARTMENTS = [
-  { value: "Men", label: "Men" },
-  { value: "Women", label: "Women" },
-  { value: "Unisex", label: "Unisex" },
+  { value: "men", label: "Men" },
+  { value: "women", label: "Women" },
+  { value: "unisex", label: "Unisex" },
 ] as const;
 
 interface AddItemModalProps {
@@ -37,6 +39,8 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [brands, setBrands] = useState<BrandResponse[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false);
+  const imageProcessingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load categories and brands
@@ -67,15 +71,50 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
 
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
-        setError("Please select a JPEG or PNG image");
-        return;
-      }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      setError(null);
+    const input = e.target;
+    if (!file) return;
+    if (imageProcessingRef.current) return;
+
+    const looksLikeImage =
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/i.test(file.name);
+
+    if (!looksLikeImage) {
+      setError("Please select an image file");
+      input.value = "";
+      return;
     }
+
+    setError(null);
+    imageProcessingRef.current = true;
+    setImageProcessing(true);
+
+    void (async () => {
+      try {
+        const normalized = await fileToNormalizedJpeg(file, {
+          squareSide: ITEM_IMAGE_STORE_SIZE_PX,
+          fit: "contain",
+        });
+        setImageFile(normalized);
+        setImagePreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return URL.createObjectURL(normalized);
+        });
+      } catch {
+        setError(
+          "Could not process this image. Try another file or open it in Preview and export as JPEG."
+        );
+        setImageFile(null);
+        setImagePreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return null;
+        });
+      } finally {
+        imageProcessingRef.current = false;
+        setImageProcessing(false);
+        input.value = "";
+      }
+    })();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -109,6 +148,7 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
         category: selectedCategory?.name ?? "",
         brand: selectedBrand?.name ?? "",
       });
+      console.log(metadata);
 
       // 2. Upload image to get imageUrl
       const { publicUrl } = await imagesApi.uploadImage(imageFile, "item");
@@ -122,6 +162,7 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
         imageUrl: publicUrl,
         department: department || undefined,
         primaryColor: primaryColor || undefined,
+        description: metadata.description?.trim() || undefined,
         themesTags: metadata.themes,
         occasionsTags: metadata.occasions,
         vibesTags: metadata.vibes,
@@ -147,6 +188,8 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
     setName("");
     setImageFile(null);
     setImagePreview(null);
+    imageProcessingRef.current = false;
+    setImageProcessing(false);
     setCategory1Id("");
     setCategory2Id("");
     setCategory3Id("");
@@ -193,16 +236,21 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
             <div className="flex items-center gap-4">
               <input
                 type="file"
-                accept="image/jpeg,image/jpg,image/png"
+                accept="image/*"
                 onChange={handleImageChange}
                 className="hidden"
                 id="item-image"
               />
               <label
                 htmlFor="item-image"
-                className="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm text-white hover:bg-slate-700 transition-colors"
+                className={`flex items-center gap-2 rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm text-white transition-colors ${
+                  imageProcessing
+                    ? "cursor-not-allowed opacity-60"
+                    : "cursor-pointer hover:bg-slate-700"
+                }`}
               >
-                <span>+</span> Upload image
+                <span>+</span>
+                {imageProcessing ? "Processing…" : "Upload image"}
               </label>
               {imagePreview && (
                 <div className="w-20 h-20 rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
@@ -323,13 +371,11 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
             </div>
           </div>
 
-          {error && (
-            <p className="text-sm text-red-400">{error}</p>
-          )}
+          {error && <p className="text-sm text-red-400">{error}</p>}
 
           <button
             type="submit"
-            disabled={submitting}
+            disabled={submitting || imageProcessing}
             className="mt-4 w-full rounded-lg bg-ff-cyan py-3 text-sm font-medium text-black hover:bg-ff-cyan/90 disabled:opacity-60 transition-colors"
           >
             {submitting ? "Submitting..." : "SUBMIT ITEM"}

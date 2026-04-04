@@ -35,6 +35,13 @@ export interface CollectionResponse {
 
 export type CollectionPage = PageResult<CollectionResponse>;
 
+export interface CollectionWithItems extends CollectionResponse {
+  topItems: Array<{
+    id: string;
+    imageUrl?: string;
+  }>;
+}
+
 // ----- Likes -----
 
 export interface CollectionLikeCreate {

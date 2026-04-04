@@ -76,6 +76,20 @@ export default function FitFolioNavbarDesktop({
       if (quickSearchDebounceTimer.current) clearTimeout(quickSearchDebounceTimer.current);
     };
   }, []);
+
+  const NAVBAR_SCROLL_THRESHOLD_PX = 8;
+  const [navbarScrolled, setNavbarScrolled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => {
+      setNavbarScrolled(window.scrollY > NAVBAR_SCROLL_THRESHOLD_PX);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const [open, setOpen] = useState(false);
   // Internal state for search if not controlled by parent
   const [internalSearching, setInternalSearching] = useState(false);
@@ -418,13 +432,17 @@ export default function FitFolioNavbarDesktop({
 
 
   return (
-    <header className={`top-0 z-50 w-full bg-black backdrop-blur  ${isItemsPage ? "relative" : "sticky"}`}>
+    <header
+      className={`top-0 z-50 w-full transition-colors duration-300 ${
+        navbarScrolled ? "bg-black/95" : "bg-transparent"
+      } ${isItemsPage ? "relative" : "sticky"}`}
+    >
       <div className="mx-auto flex items-center justify-between px-8 relative py-3">
         {/* Left spacer for centering */}
         <div className="flex-1"></div>
 
         {/* Center nav */}
-        <nav className="hidden md:flex items-center justify-center flex-1">
+        <nav className="hidden md:flex items-center justify-center">
           <ul className="flex items-center gap-12">
             <li>
               <Link
@@ -439,7 +457,7 @@ export default function FitFolioNavbarDesktop({
                 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
                 after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100 rounded-sm"
               >
-                Home
+                Community
               </Link>
             </li>
             <li>
@@ -671,7 +689,7 @@ export default function FitFolioNavbarDesktop({
                 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
                 after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100 rounded-sm"
               >
-                Lists
+                Collections
               </Link>
             </li>
             <li>
@@ -687,7 +705,7 @@ export default function FitFolioNavbarDesktop({
                 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
                 after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100 rounded-sm"
               >
-                Community
+                Tier-Lists
               </Link>
             </li>
           </ul>
