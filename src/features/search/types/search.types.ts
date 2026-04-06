@@ -25,6 +25,7 @@ export interface ItemSearchResult {
   commentCount?: number;
   viewCount?: number;
   likeCount?: number;
+  saveCount?: number;
   details?: string[];
   similarity: number;
 }

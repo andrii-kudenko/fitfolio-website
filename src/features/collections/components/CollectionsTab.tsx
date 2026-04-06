@@ -6,7 +6,7 @@ import { Plus } from "lucide-react";
 import { collectionsApi } from "@/features/collections/api/collections.api";
 import type { CollectionWithItems } from "@/features/collections/types/collections.types";
 import { itemsApi } from "@/features/items/api/items.api";
-import { CollectionProfileCard } from "@/features/collections/components/CollectionProfileCard";
+import { CollectionCard } from "@/features/collections/components/CollectionCard";
 
 export function CollectionsTab({ userId, username }: { userId: string; username: string }) {
   const [collections, setCollections] = useState<CollectionWithItems[]>([]);
@@ -93,7 +93,7 @@ export function CollectionsTab({ userId, username }: { userId: string; username:
   return (
     <div className="grid gap-6 grid-cols-2 md:grid-cols-4">
       {collections.map((collection) => (
-        <CollectionProfileCard key={collection.id} collection={collection} username={username} />
+        <CollectionCard key={collection.id} collection={collection} username={username} />
       ))}
       <Link
         href="/collections/new"

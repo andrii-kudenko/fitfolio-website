@@ -25,6 +25,7 @@ export interface ItemResponse {
   commentCount: number;
   viewCount: number;
   likeCount: number;
+  saveCount: number;
   primaryColor?: string;
   rating?: number;
 }
@@ -86,6 +87,29 @@ export interface ItemLikeCreate {
 }
 
 export interface ItemLikeResponse {
+  id: string;
+  userId: string;
+  itemId: string;
+  createdAt: string;
+}
+
+/** Spring Data `Page<ItemResponse>` shape for saved items list */
+export interface ItemSavedPage {
+  content: ItemResponse[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+// ---- ItemSave mirrors (explicit bookmark, not list membership) ----
+
+export interface ItemSaveCreate {
+  userId: string;
+  itemId: string;
+}
+
+export interface ItemSaveResponse {
   id: string;
   userId: string;
   itemId: string;

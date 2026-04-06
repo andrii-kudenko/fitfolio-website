@@ -1,5 +1,16 @@
 import type { PageResult } from "@/shared/types/pagination";
 
+/** Backend `Comment.subjectType` — use uppercase strings. */
+export type CommentSubjectType = "ITEM" | "COLLECTION" | "TIER_LIST";
+
+// Java: CommentCreateRequest (POST /comments — user from session)
+export interface CommentCreateRequest {
+  parentId?: string | null;
+  subjectId: string;
+  subjectType: CommentSubjectType;
+  text: string;
+}
+
 // Java: CommentCreate
 export interface CommentCreate {
   userId: string;

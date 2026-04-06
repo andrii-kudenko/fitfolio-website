@@ -11,6 +11,7 @@ import { usersApi } from '@/features/users/api/users.api';
 import type { TierListDetailResponse } from '@/features/tierlists/types/tierlists.types';
 import type { ItemResponse } from '@/features/items/types/items.types';
 import type { UserProfileResponse } from '@/features/users/types/users.types';
+import CommentsSection from '@/features/comments/CommentsSection';
 
 interface TierItemWithDetails {
   id: string;
@@ -267,7 +268,10 @@ export default function TierListPage() {
           })}
         </div>
 
-        
+        <section className="mt-12 border-t border-slate-800 pt-10">
+          <h2 className="mb-6 text-xl font-semibold text-white">Comments</h2>
+          <CommentsSection subjectType="TIER_LIST" subjectId={tierList.id} />
+        </section>
       </div>
     </main>
   );

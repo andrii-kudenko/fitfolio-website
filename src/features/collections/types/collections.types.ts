@@ -29,6 +29,7 @@ export interface CollectionResponse {
   commentCount: number;
   viewCount: number;
   itemCount: number;
+  saveCount: number;
   createdAt: string;
   updatedAt: string;
 }
@@ -50,6 +51,27 @@ export interface CollectionLikeCreate {
 }
 
 export interface CollectionLikeResponse {
+  id: string;
+  userId: string;
+  collectionId: string;
+  createdAt: string;
+}
+
+/** Spring Data `Page<CollectionResponse>` for saved collections */
+export interface CollectionSavedPage {
+  content: CollectionResponse[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export interface CollectionSaveCreate {
+  userId: string;
+  collectionId: string;
+}
+
+export interface CollectionSaveResponse {
   id: string;
   userId: string;
   collectionId: string;

@@ -1,9 +1,11 @@
 'use client';
 
 import Image from 'next/image';
+import { useCallback, useEffect, useState } from 'react';
 import { Star, Eye, MessageCircle, HeartIcon, BookmarkIcon } from 'lucide-react';
-import { ItemFullResponse, ItemResponse } from '../types/items.types';
+import { ItemFullResponse } from '../types/items.types';
 import Link from 'next/link';
+import { itemsApi } from '../api/items.api';
 
 interface ItemCardProps {
   item: ItemFullResponse;
@@ -16,7 +18,77 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
+function readLoggedInUserId(): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('fitfolio_logged_in');
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === 'string' ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function ItemCard({ item }: ItemCardProps) {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [saved, setSaved] = useState(false);
+  const [saveCount, setSaveCount] = useState(item.item.saveCount ?? 0);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setSaveCount(item.item.saveCount ?? 0);
+  }, [item.item.id, item.item.saveCount]);
+
+  useEffect(() => {
+    setUserId(readLoggedInUserId());
+  }, []);
+
+  useEffect(() => {
+    const uid = userId;
+    if (!uid) {
+      setSaved(false);
+      return;
+    }
+    let cancelled = false;
+    itemsApi.isSaved(uid, item.item.id).then((v) => {
+      if (!cancelled) setSaved(v);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [userId, item.item.id]);
+
+  const onBookmarkClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const uid = userId ?? readLoggedInUserId();
+      if (!uid) {
+        window.location.href = '/login';
+        return;
+      }
+      if (saving) return;
+      setSaving(true);
+      try {
+        if (saved) {
+          await itemsApi.unsave(uid, item.item.id);
+          setSaved(false);
+          setSaveCount((c) => Math.max(0, c - 1));
+        } else {
+          await itemsApi.save({ userId: uid, itemId: item.item.id });
+          setSaved(true);
+          setSaveCount((c) => c + 1);
+        }
+      } catch {
+        // keep UI unchanged on failure
+      } finally {
+        setSaving(false);
+      }
+    },
+    [userId, saved, saving, item.item.id]
+  );
+
   return (
     <Link
       href={`/items/${item.item.slug}`}
@@ -88,17 +160,27 @@ export default function ItemCard({ item }: ItemCardProps) {
             bg-black/80 p-2"
           >
             <div className="flex items-center gap-1">
-              <HeartIcon className="size-3.5 text-ff-cyan sm:size-4.5" strokeWidth={1.5} />
+              <HeartIcon className="size-3.5 text-ff-cyan sm:size-4" strokeWidth={1.5} />
               <span className="text-xs text-white sm:text-xs">1.2k</span>
             </div>
             <div className="flex items-center gap-1">
-              <MessageCircle className="size-3.5 text-ff-cyan sm:size-4.5" strokeWidth={1.5} />
+              <MessageCircle className="size-3.5 text-ff-cyan sm:size-4" strokeWidth={1.5} />
               <span className="text-xs text-white sm:text-xs">326</span>
             </div>
-            <div className="flex items-center gap-1">
-              <BookmarkIcon className="size-3.5 text-ff-cyan sm:size-4.5" strokeWidth={1.5} />
-              <span className="text-xs text-white sm:text-xs">20k</span>
-            </div>
+            <button
+              type="button"
+              onClick={onBookmarkClick}
+              disabled={saving}
+              className="flex items-center gap-[2px] rounded-md p-0.5 -m-0.5 transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+              aria-label={saved ? 'Remove from saved' : 'Save item'}
+              aria-pressed={saved}
+            >
+              <BookmarkIcon
+                className={`size-3.5 sm:size-4 shrink-0 ${saved ? 'fill-ff-cyan text-ff-cyan' : 'text-ff-cyan'}`}
+                strokeWidth={1.5}
+              />
+              <span className="text-xs text-white sm:text-xs tabular-nums">{formatCount(saveCount)}</span>
+            </button>
           </div>
 
         {/* Content */}

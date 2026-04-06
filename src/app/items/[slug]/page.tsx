@@ -431,7 +431,7 @@ export default function ItemPage() {
           )}
 
           {activeTab === 'comments' && item?.item?.id && (
-            <CommentsSection itemId={item.item.id} />
+            <CommentsSection subjectType="ITEM" subjectId={item.item.id} />
           )}
         </section>
           </>
@@ -1101,7 +1101,7 @@ export default function ItemPage() {
 //           )}
 
 //           {activeTab === 'comments' && item?.item?.id && (
-//             <CommentsSection itemId={item.item.id} />
+//             <CommentsSection subjectType="ITEM" subjectId={item.item.id} />
 //           )}
 //         </section>
 //           </>

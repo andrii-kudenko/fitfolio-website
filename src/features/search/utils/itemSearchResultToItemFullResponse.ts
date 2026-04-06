@@ -32,6 +32,7 @@ export function itemSearchResultToItemFullResponse(
     commentCount: r.commentCount ?? 0,
     viewCount: r.viewCount ?? 0,
     likeCount: r.likeCount ?? 0,
+    saveCount: r.saveCount ?? 0,
     details: r.details,
   };
   return { item, brand: undefined, category: undefined };

@@ -11,6 +11,7 @@ import { usersApi } from '@/features/users/api/users.api';
 import type { CollectionResponse, CollectionItemResponse } from '@/features/collections/types/collections.types';
 import type { ItemResponse } from '@/features/items/types/items.types';
 import type { UserProfileResponse } from '@/features/users/types/users.types';
+import CommentsSection from '@/features/comments/CommentsSection';
 
 interface CollectionItemWithDetails extends CollectionItemResponse {
   item?: ItemResponse;
@@ -307,6 +308,11 @@ export default function CollectionPage() {
             <p className="text-xl font-bold text-white">This collection is empty.</p>
           </div>
         )}
+
+        <section className="mt-12 border-t border-slate-800 pt-10">
+          <h2 className="mb-6 text-xl font-semibold text-white">Comments</h2>
+          <CommentsSection subjectType="COLLECTION" subjectId={collection.id} />
+        </section>
       </div>
     </main>
   );

@@ -1,5 +1,8 @@
+"use client";
+
 import Image from "next/image";
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import {
   Eye,
   MessageCircle,
@@ -9,6 +12,7 @@ import {
   User,
 } from "lucide-react";
 import type { TierListWithTiers } from "@/features/tierlists/types/tierlists.types";
+import { tierlistsApi } from "@/features/tierlists/api/tierlists.api";
 
 function tierListPreviewSlots(
   tiers: TierListWithTiers["tiers"]
@@ -31,13 +35,72 @@ function formatCount(count: number): string {
   return count.toString();
 }
 
-export function TierListProfileCard({
+function readLoggedInUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("fitfolio_logged_in");
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === "string" ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
+export function TierListCard({
   tierList,
   username,
 }: {
   tierList: TierListWithTiers;
   username: string;
 }) {
+  const [userId, setUserId] = useState<string | null>(null);
+  const [saved, setSaved] = useState(tierList.isSaved);
+  const [saveCount, setSaveCount] = useState(tierList.saveCount ?? 0);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setSaveCount(tierList.saveCount ?? 0);
+  }, [tierList.id, tierList.saveCount]);
+
+  useEffect(() => {
+    setUserId(readLoggedInUserId());
+  }, []);
+
+  useEffect(() => {
+    setSaved(tierList.isSaved);
+  }, [tierList.id, tierList.isSaved]);
+
+  const onBookmarkClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const uid = userId ?? readLoggedInUserId();
+      if (!uid) {
+        window.location.href = "/login";
+        return;
+      }
+      if (saving) return;
+      setSaving(true);
+      try {
+        if (saved) {
+          await tierlistsApi.unsave(uid, tierList.id);
+          setSaved(false);
+          setSaveCount((c) => Math.max(0, c - 1));
+        } else {
+          await tierlistsApi.save({ userId: uid, tierListId: tierList.id });
+          setSaved(true);
+          setSaveCount((c) => c + 1);
+        }
+      } catch {
+        // keep UI unchanged on failure
+      } finally {
+        setSaving(false);
+      }
+    },
+    [userId, saved, saving, tierList.id]
+  );
+
   const slots = tierListPreviewSlots(tierList.tiers);
 
   const likeLabel =
@@ -106,22 +169,38 @@ export function TierListProfileCard({
               bg-black/80 p-2"
       >
         <div className="flex items-center gap-1">
-          <HeartIcon className="size-3.5 text-ff-cyan sm:size-4.5" strokeWidth={1.5} />
+          <HeartIcon
+            className={`size-3.5 sm:size-4 shrink-0 ${tierList.isLiked ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
+            strokeWidth={1.5}
+          />
           <span className="text-[12px] text-white sm:text-xs">{likeLabel}</span>
         </div>
 
         <div className="flex items-center gap-1">
-          <MessageCircle className="size-3.5 text-ff-cyan sm:size-4.5" strokeWidth={1.5} />
+          <MessageCircle
+            className={`size-3.5 sm:size-4 shrink-0 ${tierList.isCommented ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
+            strokeWidth={1.5}
+          />
           <span className="text-[12px] text-white sm:text-xs">
             {formatCount(tierList.commentCount)}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <BookmarkIcon className="size-3.5 text-ff-cyan sm:size-4.5" strokeWidth={1.5} />
-          <span className="text-[12px] text-white sm:text-xs">
-            {formatCount(tierList.viewCount)}
+        <button
+          type="button"
+          onClick={onBookmarkClick}
+          disabled={saving}
+          className="flex items-center gap-[2px] rounded-md p-0.5 -m-0.5 transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+          aria-label={saved ? "Remove from saved tier lists" : "Save tier list"}
+          aria-pressed={saved}
+        >
+          <BookmarkIcon
+            className={`size-3.5 sm:size-4 shrink-0 ${saved ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
+            strokeWidth={1.5}
+          />
+          <span className="text-[12px] text-white sm:text-xs tabular-nums">
+            {formatCount(saveCount)}
           </span>
-        </div>
+        </button>
       </div>
 
       <h3 className="line-clamp-2 text-start text-xs font-semibold leading-snug text-white px-2">

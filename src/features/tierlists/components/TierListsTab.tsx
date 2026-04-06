@@ -6,7 +6,19 @@ import { Plus } from "lucide-react";
 import { tierlistsApi } from "@/features/tierlists/api/tierlists.api";
 import type { TierListWithTiers } from "@/features/tierlists/types/tierlists.types";
 import { itemsApi } from "@/features/items/api/items.api";
-import { TierListProfileCard } from "@/features/tierlists/components/TierListProfileCard";
+import { TierListCard } from "@/features/tierlists/components/TierListCard";
+
+function readLoggedInUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("fitfolio_logged_in");
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === "string" ? u.id : null;
+  } catch {
+    return null;
+  }
+}
 
 export function TierListsTab({ userId, username }: { userId: string; username: string }) {
   const [tierLists, setTierLists] = useState<TierListWithTiers[]>([]);
@@ -16,8 +28,10 @@ export function TierListsTab({ userId, username }: { userId: string; username: s
     async function fetchTierLists() {
       try {
         setLoading(true);
+        const viewerUserId = readLoggedInUserId();
         const tierListsPage = await tierlistsApi.getForUser(userId, {
           size: 20,
+          ...(viewerUserId ? { viewerUserId } : {}),
         });
 
         const tierListsWithTiers = await Promise.all(
@@ -117,7 +131,7 @@ export function TierListsTab({ userId, username }: { userId: string; username: s
   return (
     <div className="grid gap-6 grid-cols-2 md:grid-cols-4">
       {tierLists.map((tierList) => (
-        <TierListProfileCard key={tierList.id} tierList={tierList} username={username} />
+        <TierListCard key={tierList.id} tierList={tierList} username={username} />
       ))}
       <Link
         href="/tierlists/new"

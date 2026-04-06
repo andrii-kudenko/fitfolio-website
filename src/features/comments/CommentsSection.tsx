@@ -5,7 +5,10 @@ import { commentsApi } from "./api/comments.api";
 import { api } from "@/shared/lib/api";
 import CommentItem from "./CommentItem";
 import CommentForm from "./CommentForm";
-import type { CommentResponse } from "./types/comments.types";
+import type {
+  CommentResponse,
+  CommentSubjectType,
+} from "./types/comments.types";
 
 type CommentNode = CommentResponse & {
   children: CommentNode[];
@@ -141,7 +144,13 @@ function CommentThread({
   );
 }
 
-export default function CommentsSection({ itemId }: { itemId: string }) {
+export default function CommentsSection({
+  subjectType,
+  subjectId,
+}: {
+  subjectType: CommentSubjectType;
+  subjectId: string;
+}) {
   const [comments, setComments] = useState<CommentResponse[]>([]);
   const [loading, setLoading] = useState(false);
   const [posting, setPosting] = useState(false);
@@ -163,7 +172,9 @@ export default function CommentsSection({ itemId }: { itemId: string }) {
   async function loadComments() {
     setLoading(true);
     try {
-      const data = await commentsApi.listForItem(itemId, { sort: "newest" });
+      const data = await commentsApi.listForSubject(subjectType, subjectId, {
+        sort: "newest",
+      });
       setComments(data.content || []);
     } finally {
       setLoading(false);
@@ -171,10 +182,10 @@ export default function CommentsSection({ itemId }: { itemId: string }) {
   }
 
   useEffect(() => {
-    if (itemId) {
+    if (subjectId) {
       loadComments();
     }
-  }, [itemId]);
+  }, [subjectType, subjectId]);
 
   async function handleCreate(text: string) {
     if (!me) {
@@ -186,7 +197,16 @@ export default function CommentsSection({ itemId }: { itemId: string }) {
     setPosting(true);
 
     try {
-      await commentsApi.createForItem(itemId, { parentId: null, text });
+      if (subjectType === "ITEM") {
+        await commentsApi.createForItem(subjectId, { parentId: null, text });
+      } else {
+        await commentsApi.createForSubject({
+          parentId: null,
+          subjectId,
+          subjectType,
+          text,
+        });
+      }
       await loadComments();
     } finally {
       setPosting(false);
