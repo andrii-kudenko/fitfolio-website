@@ -54,9 +54,11 @@ function readLoggedInUserId(): string | null {
 export function TierListCard({
   tierList,
   username,
+  layout = "default",
 }: {
   tierList: TierListWithTiers;
   username: string;
+  layout?: "default" | "grid";
 }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [liked, setLiked] = useState(tierList.isLiked);
@@ -148,10 +150,12 @@ export function TierListCard({
 
   const slots = tierListPreviewSlots(tierList.tiers);
 
+  const widthClass = layout === "grid" ? " w-full min-w-0" : "";
+
   return (
     <Link
       href={`/${username}/tierlists/${tierList.slug}`}
-      className=" group flex flex-col  focus:outline-none focus-visible:ring-2 focus-visible:ring-ff-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-3xl"
+      className={` group flex flex-col  focus:outline-none focus-visible:ring-2 focus-visible:ring-ff-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-3xl${widthClass}`}
     >
       <div className="relative aspect-square overflow-hidden rounded-2xl ring-1 ring-white/10 transition-shadow duration-300 group-hover:ring-ff-cyan/35 ">
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-black/40">
@@ -252,7 +256,7 @@ export function TierListCard({
           type="button"
           onClick={onBookmarkClick}
           disabled={saving}
-          className="flex items-center gap-[2px] rounded-md p-0.5 -m-0.5 transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+          className="flex items-center gap-[2px] rounded-md transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
           aria-label={saved ? "Remove from saved tier lists" : "Save tier list"}
           aria-pressed={saved}
         >

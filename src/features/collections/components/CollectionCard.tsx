@@ -39,11 +39,14 @@ export function CollectionCard({
   collection,
   username,
   rail,
+  layout = "default",
 }: {
   collection: CollectionWithItems;
   username: string;
   /** Narrow width for horizontal carousels (e.g. home), same idea as item cards */
   rail?: boolean;
+  /** `"grid"` fills grid cells and shrinks on small breakpoints (see ItemCard layout). */
+  layout?: "default" | "grid";
 }) {
   const [userId, setUserId] = useState<string | null>(null);
   const [liked, setLiked] = useState(collection.isLiked);
@@ -135,10 +138,17 @@ export function CollectionCard({
 
   const slots = Array.from({ length: 4 }, (_, i) => collection.topItems[i]);
 
+  const widthClass =
+    layout === "grid"
+      ? " w-full min-w-0"
+      : rail
+        ? " w-[min(85vw,200px)] shrink-0"
+        : "";
+
   return (
     <Link
       href={`/${username}/collections/${collection.slug}`}
-      className={` group flex flex-col  focus:outline-none focus-visible:ring-2 focus-visible:ring-ff-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-3xl${rail ? " w-[min(85vw,200px)] shrink-0" : ""}`}
+      className={` group flex flex-col  focus:outline-none focus-visible:ring-2 focus-visible:ring-ff-cyan focus-visible:ring-offset-2 focus-visible:ring-offset-black rounded-3xl${widthClass}`}
     >
       <div className="relative aspect-square overflow-hidden rounded-2xl ring-1 ring-white/10 transition-shadow duration-300 group-hover:ring-ff-cyan/35 ">
         <div className="absolute inset-0 grid grid-cols-2 grid-rows-2 gap-px bg-black/40">

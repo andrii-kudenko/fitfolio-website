@@ -5,6 +5,7 @@ import {
   SearchSort,
   SmartSearchResponse,
 } from "../types/search.types";
+import type { CollectionsAndTierListsSearchResponse } from "../types/listsSearch.types";
 
 export interface SearchParams {
   query: string;
@@ -116,6 +117,25 @@ export const searchApi = {
     const { data } = await api.post<SmartSearchResponse>(
       "/smart-search",
       { query: params.query?.trim() ?? "" },
+      { signal }
+    );
+    return data;
+  },
+
+  /**
+   * Public collections + tier lists by title (substring). Optional viewer for like/save/comment flags.
+   * GET /api/search/collections-and-tierlists
+   */
+  searchCollectionsAndTierLists: async (
+    params: { query: string; viewerUserId?: string; limit?: number },
+    signal?: AbortSignal
+  ): Promise<CollectionsAndTierListsSearchResponse> => {
+    const q = new URLSearchParams();
+    q.set("query", params.query.trim());
+    if (params.viewerUserId) q.set("viewerUserId", params.viewerUserId);
+    q.set("limit", String(params.limit ?? 20));
+    const { data } = await api.get<CollectionsAndTierListsSearchResponse>(
+      `/search/collections-and-tierlists?${q.toString()}`,
       { signal }
     );
     return data;
