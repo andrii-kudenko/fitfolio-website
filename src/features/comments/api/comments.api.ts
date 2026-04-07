@@ -1,6 +1,5 @@
 import { api } from "@/shared/lib/api";
 import type {
-  CommentCreateItem,
   CommentCreateRequest,
   CommentResponse,
   CommentPage,
@@ -36,28 +35,6 @@ export const commentsApi = {
   ): Promise<CommentResponse> => {
     const { data } = await api.post<CommentResponse>("/comments", payload);
     return data;
-  },
-
-  // -----------------------------
-  // Item comments (same as subject ITEM; kept for call sites that prefer the path)
-  // -----------------------------
-
-  createForItem: async (
-    itemId: string,
-    payload: CommentCreateItem
-  ): Promise<CommentResponse> => {
-    const { data } = await api.post<CommentResponse>(
-      `/items/${itemId}/comments`,
-      payload
-    );
-    return data;
-  },
-
-  listForItem: async (
-    itemId: string,
-    params?: { page?: number; size?: number; sort?: "newest" | "top" }
-  ): Promise<CommentPage> => {
-    return commentsApi.listForSubject("ITEM", itemId, params);
   },
 
   // -----------------------------

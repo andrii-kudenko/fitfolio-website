@@ -10,6 +10,10 @@ import {
   HeartIcon,
   BookmarkIcon,
   User,
+  ListIcon,
+  ListOrderedIcon,
+  ListTreeIcon,
+  ListCollapseIcon,
 } from "lucide-react";
 import type { TierListWithTiers } from "@/features/tierlists/types/tierlists.types";
 import { tierlistsApi } from "@/features/tierlists/api/tierlists.api";
@@ -55,9 +59,16 @@ export function TierListCard({
   username: string;
 }) {
   const [userId, setUserId] = useState<string | null>(null);
+  const [liked, setLiked] = useState(tierList.isLiked);
+  const [likeCount, setLikeCount] = useState(tierList.likeCount ?? 0);
+  const [liking, setLiking] = useState(false);
   const [saved, setSaved] = useState(tierList.isSaved);
   const [saveCount, setSaveCount] = useState(tierList.saveCount ?? 0);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLikeCount(tierList.likeCount ?? 0);
+  }, [tierList.id, tierList.likeCount]);
 
   useEffect(() => {
     setSaveCount(tierList.saveCount ?? 0);
@@ -68,8 +79,42 @@ export function TierListCard({
   }, []);
 
   useEffect(() => {
+    setLiked(tierList.isLiked);
+  }, [tierList.id, tierList.isLiked]);
+
+  useEffect(() => {
     setSaved(tierList.isSaved);
   }, [tierList.id, tierList.isSaved]);
+
+  const onLikeClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const uid = userId ?? readLoggedInUserId();
+      if (!uid) {
+        window.location.href = "/login";
+        return;
+      }
+      if (liking) return;
+      setLiking(true);
+      try {
+        if (liked) {
+          await tierlistsApi.unlike(uid, tierList.id);
+          setLiked(false);
+          setLikeCount((c) => Math.max(0, c - 1));
+        } else {
+          await tierlistsApi.like({ userId: uid, tierListId: tierList.id });
+          setLiked(true);
+          setLikeCount((c) => c + 1);
+        }
+      } catch {
+        // keep UI unchanged on failure
+      } finally {
+        setLiking(false);
+      }
+    },
+    [userId, liked, liking, tierList.id]
+  );
 
   const onBookmarkClick = useCallback(
     async (e: React.MouseEvent) => {
@@ -103,11 +148,6 @@ export function TierListCard({
 
   const slots = tierListPreviewSlots(tierList.tiers);
 
-  const likeLabel =
-    tierList.likeCount >= 1000
-      ? (tierList.likeCount / 1000).toFixed(1) + "k"
-      : String(tierList.likeCount);
-
   return (
     <Link
       href={`/${username}/tierlists/${tierList.slug}`}
@@ -136,28 +176,41 @@ export function TierListCard({
         </div>
 
         <div
-          className="absolute top-[0px] left-[0px] flex  transition-all duration-300 justify-between gap-[2px]
-                group-hover:opacity-0 "
+          className="absolute bottom-[2px] left-[4px] flex  transition-all duration-300 justify-between gap-[2px]
+                group-hover:opacity-0 z-10"
         >
-          <div className="flex items-center gap-[3px] rounded-br-xl bg-black/80 px-1.5 py-[3px]">
+          <div className="flex items-center gap-[3px] rounded-full bg-black/80 pl-1 pr-2 py-[3px]">
             <User className="size-3 text-white/50" strokeWidth={1.5} />
             <span className="text-[10px] text-white/50 sm:text-[10px]">{username}</span>
           </div>
         </div>
 
         <div
-          className="absolute bottom-[1px] right-[1px] flex  transition-all duration-300 justify-between gap-[2px]
-                group-hover:opacity-0 "
+          className="absolute top-1/2 -translate-y-1/2 left-[1px] flex flex-col transition-all duration-300 justify-between gap-[2px] pl-1
+                group-hover:opacity-0 bg-black/80 rounded-xl p-1 z-10"
+        >
+          <div className="w-1 h-3 shrink-0 bg-[#3B82F6]/80 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-[#10B981]/80 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-[#F59E0B]/80 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-[#F97316]/80 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-[#EF4444]/80 rounded-full"></div>
+        </div>
+
+        <div className="inset-0 absolute bg-black/10"></div>
+
+        <div
+          className="absolute bottom-[2px] right-[4px] flex  transition-all duration-300 justify-between gap-[2px]
+                group-hover:opacity-0 z-10"
         >
           <div className="flex items-center gap-[3px] rounded-xl bg-black/30 px-1.5 py-[3px]">
             <Shirt className="size-3 text-white/50" strokeWidth={1.5} />
-            <span className="text-xs text-white/50 sm:text-[10px]">
+            <span className="text-white/50 text-[10px]">
               {formatCount(tierList.itemCount)}
             </span>
           </div>
           <div className="flex items-center gap-[3px] rounded-xl bg-black/30 px-1.5 py-[3px]">
             <Eye className="size-3 text-white/50" strokeWidth={1.5} />
-            <span className="text-xs text-white/50 sm:text-[10px]">
+            <span className="text-white/50 text-[10px]">
               {formatCount(tierList.viewCount)}
             </span>
           </div>
@@ -168,19 +221,29 @@ export function TierListCard({
         className="  flex rounded-bl-xl transition-all duration-300 justify-start gap-2
               bg-black/80 p-2"
       >
-        <div className="flex items-center gap-1">
+        <button
+          type="button"
+          onClick={onLikeClick}
+          disabled={liking}
+          className="flex items-center gap-1 rounded-md p-0.5 -m-0.5 transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+          aria-label={liked ? "Unlike tier list" : "Like tier list"}
+          aria-pressed={liked}
+        >
           <HeartIcon
-            className={`size-3.5 sm:size-4 shrink-0 ${tierList.isLiked ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
+            className={`size-3.5 sm:size-4 shrink-0 ${liked ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
             strokeWidth={1.5}
-          />
-          <span className="text-[12px] text-white sm:text-xs">{likeLabel}</span>
-        </div>
+          />         
+          <span className="text-[12px] text-white sm:text-xs tabular-nums">
+            {formatCount(likeCount)}
+          </span>
+        </button>
 
         <div className="flex items-center gap-1">
           <MessageCircle
             className={`size-3.5 sm:size-4 shrink-0 ${tierList.isCommented ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
             strokeWidth={1.5}
           />
+     
           <span className="text-[12px] text-white sm:text-xs">
             {formatCount(tierList.commentCount)}
           </span>

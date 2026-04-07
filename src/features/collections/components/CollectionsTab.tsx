@@ -8,6 +8,18 @@ import type { CollectionWithItems } from "@/features/collections/types/collectio
 import { itemsApi } from "@/features/items/api/items.api";
 import { CollectionCard } from "@/features/collections/components/CollectionCard";
 
+function readLoggedInUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("fitfolio_logged_in");
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === "string" ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
 export function CollectionsTab({ userId, username }: { userId: string; username: string }) {
   const [collections, setCollections] = useState<CollectionWithItems[]>([]);
   const [loading, setLoading] = useState(true);
@@ -16,8 +28,10 @@ export function CollectionsTab({ userId, username }: { userId: string; username:
     async function fetchCollections() {
       try {
         setLoading(true);
+        const viewerUserId = readLoggedInUserId();
         const collectionsPage = await collectionsApi.getForUser(userId, {
           size: 20,
+          ...(viewerUserId ? { viewerUserId } : {}),
         });
 
         const collectionsWithItems = await Promise.all(

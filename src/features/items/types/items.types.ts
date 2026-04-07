@@ -30,14 +30,32 @@ export interface ItemResponse {
   rating?: number;
 }
 
+/** List row from GET /users/{userId}/items when viewerUserId is sent. */
+export interface ItemViewerResponse extends ItemResponse {
+  isLiked: boolean;
+  isSaved: boolean;
+  isCommented: boolean;
+}
+
+export type ItemViewerPage = PageResult<ItemViewerResponse>;
+
+/** Mirrors API {@code ItemUserEngagement} when {@code viewerUserId} is sent on full/detail. */
+export interface ItemUserEngagement {
+  isLiked: boolean;
+  isSaved: boolean;
+  isCommented: boolean;
+  isReviewed: boolean;
+}
+
 export interface ItemFullResponse {
   item: ItemResponse;
   brand?: BrandResponse;
   category?: CategoryResponse;
   contributor?: UserProfileResponse;
+  viewerEngagement?: ItemUserEngagement | null;
 }
 
-  export type ItemPage = PageResult<ItemFullResponse>;
+export type ItemPage = PageResult<ItemResponse>;
   // export type ItemPageFull = PageResult<ItemFullResponse>;
 
   // Create payload (mirror your ItemCreate DTO)

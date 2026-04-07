@@ -197,16 +197,12 @@ export default function CommentsSection({
     setPosting(true);
 
     try {
-      if (subjectType === "ITEM") {
-        await commentsApi.createForItem(subjectId, { parentId: null, text });
-      } else {
-        await commentsApi.createForSubject({
-          parentId: null,
-          subjectId,
-          subjectType,
-          text,
-        });
-      }
+      await commentsApi.createForSubject({
+        parentId: null,
+        subjectId,
+        subjectType,
+        text,
+      });
       await loadComments();
     } finally {
       setPosting(false);

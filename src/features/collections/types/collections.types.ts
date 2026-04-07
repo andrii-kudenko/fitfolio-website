@@ -36,10 +36,30 @@ export interface CollectionResponse {
 
 export type CollectionPage = PageResult<CollectionResponse>;
 
-export interface CollectionWithItems extends CollectionResponse {
+/** List payload from GET /users/{id}/collections when viewerUserId is sent. */
+export interface CollectionViewerResponse extends CollectionResponse {
+  isLiked: boolean;
+  isSaved: boolean;
+  isCommented: boolean;
+}
+
+export type CollectionViewerPage = PageResult<CollectionViewerResponse>;
+
+export interface CollectionWithItems extends CollectionViewerResponse {
   topItems: Array<{
     id: string;
     imageUrl?: string;
+  }>;
+}
+
+/** GET /collections/slug/{slug}/detail — includes ordered items; increments view count. */
+export interface CollectionDetailResponse extends CollectionResponse {
+  items: Array<{
+    id: string;
+    collectionId: string;
+    itemId: string;
+    rank: number | null;
+    createdAt: string;
   }>;
 }
 

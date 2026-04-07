@@ -689,23 +689,23 @@ export default function FitFolioNavbarDesktop({
                 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
                 after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100 rounded-sm"
               >
-                Collections
+                Lists
               </Link>
             </li>
             <li>
               <Link
-                href="/community"
+                href="/members"
                 onClick={(e) => {
                   if (onNavigate) {
                     e.preventDefault();
-                    onNavigate("/community");
+                    onNavigate("/members");
                   }
                 }}
                 className="block px-4 py-2 text-[20px] font-medium text-white/85 transition ring-ff-cyan relative hover:text-white 
                 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
                 after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100 rounded-sm"
               >
-                Tier-Lists
+                Members
               </Link>
             </li>
           </ul>

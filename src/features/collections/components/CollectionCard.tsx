@@ -10,6 +10,8 @@ import {
   HeartIcon,
   BookmarkIcon,
   User,
+  ListCollapseIcon,
+  ListOrderedIcon,
 } from "lucide-react";
 import type { CollectionWithItems } from "@/features/collections/types/collections.types";
 import { collectionsApi } from "@/features/collections/api/collections.api";
@@ -44,9 +46,16 @@ export function CollectionCard({
   rail?: boolean;
 }) {
   const [userId, setUserId] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [liked, setLiked] = useState(collection.isLiked);
+  const [likeCount, setLikeCount] = useState(collection.likeCount ?? 0);
+  const [liking, setLiking] = useState(false);
+  const [saved, setSaved] = useState(collection.isSaved);
   const [saveCount, setSaveCount] = useState(collection.saveCount ?? 0);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLikeCount(collection.likeCount ?? 0);
+  }, [collection.id, collection.likeCount]);
 
   useEffect(() => {
     setSaveCount(collection.saveCount ?? 0);
@@ -57,19 +66,42 @@ export function CollectionCard({
   }, []);
 
   useEffect(() => {
-    const uid = userId;
-    if (!uid) {
-      setSaved(false);
-      return;
-    }
-    let cancelled = false;
-    collectionsApi.isSaved(uid, collection.id).then((v) => {
-      if (!cancelled) setSaved(v);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [userId, collection.id]);
+    setLiked(collection.isLiked);
+  }, [collection.id, collection.isLiked]);
+
+  useEffect(() => {
+    setSaved(collection.isSaved);
+  }, [collection.id, collection.isSaved]);
+
+  const onLikeClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const uid = userId ?? readLoggedInUserId();
+      if (!uid) {
+        window.location.href = "/login";
+        return;
+      }
+      if (liking) return;
+      setLiking(true);
+      try {
+        if (liked) {
+          await collectionsApi.unlike(uid, collection.id);
+          setLiked(false);
+          setLikeCount((c) => Math.max(0, c - 1));
+        } else {
+          await collectionsApi.like({ userId: uid, collectionId: collection.id });
+          setLiked(true);
+          setLikeCount((c) => c + 1);
+        }
+      } catch {
+        // keep UI unchanged on failure
+      } finally {
+        setLiking(false);
+      }
+    },
+    [userId, liked, liking, collection.id]
+  );
 
   const onBookmarkClick = useCallback(
     async (e: React.MouseEvent) => {
@@ -131,26 +163,66 @@ export function CollectionCard({
         </div>
 
         <div
-          className="absolute top-[0px] left-[0px] flex  transition-all duration-300 justify-between gap-[2px]
-                group-hover:opacity-0 "
+          className="absolute bottom-[2px] left-[4px] flex  transition-all duration-300 justify-between gap-[2px]
+                group-hover:opacity-0 z-10"
         >
-          <div className="flex items-center gap-[3px] rounded-br-xl bg-black/80 px-1.5 py-[3px]">
+          <div className="flex items-center gap-[3px] rounded-full bg-black/80 pl-1 pr-2 py-[3px]">
             <User className="size-3 text-white/50" strokeWidth={1.5} />
             <span className="text-[10px] text-white/50 sm:text-[10px]">{username}</span>
           </div>
         </div>
 
+        {/* Marks for ranked/ordered collections */}
         <div
-          className="absolute bottom-[1px] right-[1px] flex  transition-all duration-300 justify-between gap-[2px]
-                group-hover:opacity-0 "
+          className={`absolute top-1/2 -translate-y-1/2 left-[1px] flex flex-col transition-all duration-300 justify-between gap-[2px] pl-1
+                group-hover:opacity-0 bg-black/80 rounded-xl p-1 z-10 ${!collection.isRanked ? "hidden" : ""}`}
+        >
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/40 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/30 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/20 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/10 rounded-full"></div>   
+        </div>
+        
+        {/* Marks for unranked/unordered collections */}
+        <div
+          className={`absolute top-1/2 -translate-y-1/2 left-[1px] flex flex-col transition-all duration-300 justify-between gap-[2px] pl-1
+                group-hover:opacity-0 bg-black/80 rounded-xl p-1 z-10 ${collection.isRanked ? "hidden" : ""}`}
+        >
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>   
+        </div>
+
+        <div className="inset-0 absolute bg-black/10"></div>
+        {/* <div
+          className="absolute top-1/2 -translate-y-1/2 left-[0px] flex flex-col transition-all duration-300 justify-between gap-[2px] pl-1
+                group-hover:opacity-0 bg-black/80 rounded-xl p-1"
+        >
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+          <div className="w-1 h-3 shrink-0 bg-white/50 rounded-full"></div>
+        </div> */}
+
+        <div
+          className="absolute bottom-[2px] right-[4px] flex  transition-all duration-300 justify-between gap-[2px]
+                group-hover:opacity-0 z-10"
         >
           <div className="flex items-center gap-[3px] rounded-xl bg-black/30 px-1.5 py-[3px]">
             <Shirt className="size-3 text-white/50" strokeWidth={1.5} />
-            <span className="text-xs text-white/50 sm:text-[10px]">20</span>
+            <span className="text-white/50 text-[10px]">
+              {formatCount(collection.itemCount)}
+            </span>
           </div>
           <div className="flex items-center gap-[3px] rounded-xl bg-black/30 px-1.5 py-[3px]">
             <Eye className="size-3 text-white/50" strokeWidth={1.5} />
-            <span className="text-xs text-white/50 sm:text-[10px]">20k</span>
+            <span className="text-white/50 text-[10px]">
+              {formatCount(collection.viewCount)}
+            </span>
           </div>
         </div>
       </div>
@@ -159,15 +231,33 @@ export function CollectionCard({
         className="  flex rounded-bl-xl transition-all duration-300 justify-start gap-2
               bg-black/80 p-2"
       >
-        <div className="flex items-center gap-1">
-          <HeartIcon className="size-3.5 text-ff-cyan sm:size-4" strokeWidth={1.5} />
-          <span className="text-[12px] text-white sm:text-xs">1.2k</span>
-        </div>
+        <button
+          type="button"
+          onClick={onLikeClick}
+          disabled={liking}
+          className="flex items-center gap-1 rounded-md p-0.5 -m-0.5 transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+          aria-label={liked ? "Unlike collection" : "Like collection"}
+          aria-pressed={liked}
+        >
+          <HeartIcon
+            className={`size-3.5 sm:size-4 shrink-0 ${liked ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
+            strokeWidth={1.5}
+          />
+          <span className="text-[12px] text-white sm:text-xs tabular-nums">
+            {formatCount(likeCount)}
+          </span>
+        </button>
 
         <div className="flex items-center gap-1">
-          <MessageCircle className="size-3.5 text-ff-cyan sm:size-4" strokeWidth={1.5} />
-          <span className="text-[12px] text-white sm:text-xs">326</span>
+          <MessageCircle
+            className={`size-3.5 sm:size-4 shrink-0 ${collection.isCommented ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
+            strokeWidth={1.5}
+          />
+          <span className="text-[12px] text-white sm:text-xs">
+            {formatCount(collection.commentCount)}
+          </span>
         </div>
+
         <button
           type="button"
           onClick={onBookmarkClick}
@@ -180,7 +270,9 @@ export function CollectionCard({
             className={`size-3.5 sm:size-4 shrink-0 ${saved ? "fill-ff-cyan text-ff-cyan" : "text-ff-cyan"}`}
             strokeWidth={1.5}
           />
-          <span className="text-[12px] text-white sm:text-xs tabular-nums">{formatCount(saveCount)}</span>
+          <span className="text-[12px] text-white sm:text-xs tabular-nums">
+            {formatCount(saveCount)}
+          </span>
         </button>
       </div>
 

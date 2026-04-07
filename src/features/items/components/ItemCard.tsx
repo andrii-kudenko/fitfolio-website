@@ -3,12 +3,23 @@
 import Image from 'next/image';
 import { useCallback, useEffect, useState } from 'react';
 import { Star, Eye, MessageCircle, HeartIcon, BookmarkIcon } from 'lucide-react';
-import { ItemFullResponse } from '../types/items.types';
+import { ItemFullResponse, ItemViewerResponse } from '../types/items.types';
+
+function isItemViewerRow(item: ItemFullResponse['item']): item is ItemViewerResponse {
+  return (
+    'isLiked' in item &&
+    'isSaved' in item &&
+    'isCommented' in item &&
+    typeof (item as ItemViewerResponse).isLiked === 'boolean'
+  );
+}
 import Link from 'next/link';
 import { itemsApi } from '../api/items.api';
 
 interface ItemCardProps {
   item: ItemFullResponse;
+  /** Use `"grid"` when the card sits in CSS grid/flex tracks so it fills the cell and can shrink. `"scroll"` keeps a fixed card width for horizontal lists. */
+  layout?: 'grid' | 'scroll';
 }
 
 function formatCount(count: number): string {
@@ -30,11 +41,26 @@ function readLoggedInUserId(): string | null {
   }
 }
 
-export default function ItemCard({ item }: ItemCardProps) {
+export default function ItemCard({ item, layout = 'scroll' }: ItemCardProps) {
   const [userId, setUserId] = useState<string | null>(null);
-  const [saved, setSaved] = useState(false);
+  const [liked, setLiked] = useState(() =>
+    isItemViewerRow(item.item)
+      ? item.item.isLiked
+      : (item.viewerEngagement?.isLiked ?? false)
+  );
+  const [likeCount, setLikeCount] = useState(item.item.likeCount ?? 0);
+  const [liking, setLiking] = useState(false);
+  const [saved, setSaved] = useState(() =>
+    isItemViewerRow(item.item)
+      ? item.item.isSaved
+      : (item.viewerEngagement?.isSaved ?? false)
+  );
   const [saveCount, setSaveCount] = useState(item.item.saveCount ?? 0);
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setLikeCount(item.item.likeCount ?? 0);
+  }, [item.item.id, item.item.likeCount]);
 
   useEffect(() => {
     setSaveCount(item.item.saveCount ?? 0);
@@ -44,7 +70,23 @@ export default function ItemCard({ item }: ItemCardProps) {
     setUserId(readLoggedInUserId());
   }, []);
 
+  const viewerRow = isItemViewerRow(item.item) ? item.item : null;
   useEffect(() => {
+    if (!viewerRow) return;
+    setLiked(viewerRow.isLiked);
+    setSaved(viewerRow.isSaved);
+  }, [viewerRow?.id, viewerRow?.isLiked, viewerRow?.isSaved]);
+
+  useEffect(() => {
+    if (isItemViewerRow(item.item)) return;
+    const e = item.viewerEngagement;
+    if (!e) return;
+    setLiked(e.isLiked);
+    setSaved(e.isSaved);
+  }, [item.item.id, item.viewerEngagement]);
+
+  useEffect(() => {
+    if (isItemViewerRow(item.item) || item.viewerEngagement != null) return;
     const uid = userId;
     if (!uid) {
       setSaved(false);
@@ -57,7 +99,37 @@ export default function ItemCard({ item }: ItemCardProps) {
     return () => {
       cancelled = true;
     };
-  }, [userId, item.item.id]);
+  }, [userId, item.item]);
+
+  const onLikeClick = useCallback(
+    async (e: React.MouseEvent) => {
+      e.preventDefault();
+      e.stopPropagation();
+      const uid = userId ?? readLoggedInUserId();
+      if (!uid) {
+        window.location.href = '/login';
+        return;
+      }
+      if (liking) return;
+      setLiking(true);
+      try {
+        if (liked) {
+          await itemsApi.unlike(uid, item.item.id);
+          setLiked(false);
+          setLikeCount((c) => Math.max(0, c - 1));
+        } else {
+          await itemsApi.like({ userId: uid, itemId: item.item.id });
+          setLiked(true);
+          setLikeCount((c) => c + 1);
+        }
+      } catch {
+        // keep UI unchanged on failure
+      } finally {
+        setLiking(false);
+      }
+    },
+    [userId, liked, liking, item.item.id]
+  );
 
   const onBookmarkClick = useCallback(
     async (e: React.MouseEvent) => {
@@ -89,11 +161,13 @@ export default function ItemCard({ item }: ItemCardProps) {
     [userId, saved, saving, item.item.id]
   );
 
+  const linkClassName =
+    layout === 'grid'
+      ? 'group block w-full min-w-0'
+      : 'group block w-[min(85vw,200px)] shrink-0';
+
   return (
-    <Link
-      href={`/items/${item.item.slug}`}
-      className="group block w-[min(85vw,200px)] shrink-0 "
-    >
+    <Link href={`/items/${item.item.slug}`} className={linkClassName}>
       <article
         className="
           flex h-full flex-col overflow-hidden rounded-xl bg-ff-black
@@ -113,25 +187,29 @@ export default function ItemCard({ item }: ItemCardProps) {
             className="object-contain transition-transform duration-500 rounded-xl"
             sizes="(max-width: 640px) 85vw, 320px"
           />
-          <div className='absolute inset-0 bg-black/20 group-hover:bg-transparent'></div>
+          <div className='absolute inset-0 bg-black/10 group-hover:bg-transparent'></div>
 
           <div
-            className="absolute top-[0px] left-[0px] flex px-1.5 py-1 transition-all duration-300 justify-between gap-3 py-1 
-             rounded-br-xl bg-black/80 group-hover:opacity-0"
+            className="absolute bottom-[0px] left-[0px] flex px-1.5 py-1 transition-all duration-300 justify-between gap-3
+             rounded-tr-xl bg-black/80 group-hover:opacity-0"
           >
-              <div className="flex items-center gap-[4px]">
-                <Star className="size-4 text-yellow-200 sm:size-3" strokeWidth={1.5} />
-              <span className="text-xs text-white sm:text-xs">8.9</span>
+            <div className="flex items-center gap-[4px]">
+              <Star className="size-4 text-yellow-400 sm:size-3" strokeWidth={1.5} />
+              <span className="text-xs text-white sm:text-xs">
+                {item.item.rating != null ? Number(item.item.rating).toFixed(1) : '—'}
+              </span>
             </div>
           </div>
-          
+
           <div
             className="absolute bottom-[1px] right-[1px] flex  transition-all duration-300 justify-between gap-3
              group-hover:opacity-0 px-1.5 py-1 rounded-xl bg-black/30"
           >
             <div className="flex items-center gap-[3px]">
               <Eye className="size-3 text-white/50" strokeWidth={1.5} />
-              <span className="text-xs text-white/50 sm:text-[10px]">20k</span>
+              <span className="text-xs text-white/50 sm:text-[10px]">
+                {formatCount(item.item.viewCount)}
+              </span>
             </div>
           </div>
 
@@ -159,13 +237,33 @@ export default function ItemCard({ item }: ItemCardProps) {
             className="  flex rounded-bl-xl transition-all duration-300 justify-start gap-2
             bg-black/80 p-2"
           >
+            <button
+              type="button"
+              onClick={onLikeClick}
+              disabled={liking}
+              className="flex items-center gap-1 rounded-md p-0.5 -m-0.5 transition-opacity hover:opacity-90 disabled:opacity-50 cursor-pointer"
+              aria-label={liked ? 'Unlike item' : 'Like item'}
+              aria-pressed={liked}
+            >
+              <HeartIcon
+                className={`size-3.5 sm:size-4 shrink-0 ${liked ? 'fill-ff-cyan text-ff-cyan' : 'text-ff-cyan'}`}
+                strokeWidth={1.5}
+              />
+              <span className="text-xs text-white sm:text-xs tabular-nums">{formatCount(likeCount)}</span>
+            </button>
             <div className="flex items-center gap-1">
-              <HeartIcon className="size-3.5 text-ff-cyan sm:size-4" strokeWidth={1.5} />
-              <span className="text-xs text-white sm:text-xs">1.2k</span>
-            </div>
-            <div className="flex items-center gap-1">
-              <MessageCircle className="size-3.5 text-ff-cyan sm:size-4" strokeWidth={1.5} />
-              <span className="text-xs text-white sm:text-xs">326</span>
+              <MessageCircle
+                className={`size-3.5 sm:size-4 shrink-0 ${
+                  (isItemViewerRow(item.item) && item.item.isCommented) ||
+                  (!isItemViewerRow(item.item) && item.viewerEngagement?.isCommented)
+                    ? 'fill-ff-cyan text-ff-cyan'
+                    : 'text-ff-cyan'
+                }`}
+                strokeWidth={1.5}
+              />
+              <span className="text-xs text-white sm:text-xs tabular-nums">
+                {formatCount(item.item.commentCount)}
+              </span>
             </div>
             <button
               type="button"

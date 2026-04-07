@@ -8,6 +8,18 @@ import { useEffect, useState } from "react";
 import { ItemFullResponse, ItemResponse } from "@/features/items/types/items.types";
 import { itemsApi } from "@/features/items/api/items.api";
 
+function readLoggedInUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("fitfolio_logged_in");
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === "string" ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
 // const recommendedItems: ItemFullResponse[] = [
 //   {
 //     id: "a1b2c3d4-e5f6-1234-5678-abcdefabcdef",
@@ -234,7 +246,7 @@ export default function Home() {
   const [recommendedItems, setRecommendedItems] = useState<ItemFullResponse[]>([]);
 
   useEffect(() => {
-    itemsApi.getTopRecommended().then((data) => {
+    itemsApi.getTopRecommended(readLoggedInUserId()).then((data) => {
       setRecommendedItems(data);
     });
   }, []);

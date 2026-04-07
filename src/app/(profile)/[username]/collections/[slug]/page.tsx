@@ -8,7 +8,10 @@ import { Star, Eye, MessageCircle, ArrowLeft, ChevronDown, Edit, Trash2 } from '
 import { collectionsApi } from '@/features/collections/api/collections.api';
 import { itemsApi } from '@/features/items/api/items.api';
 import { usersApi } from '@/features/users/api/users.api';
-import type { CollectionResponse, CollectionItemResponse } from '@/features/collections/types/collections.types';
+import type {
+  CollectionDetailResponse,
+  CollectionItemResponse,
+} from '@/features/collections/types/collections.types';
 import type { ItemResponse } from '@/features/items/types/items.types';
 import type { UserProfileResponse } from '@/features/users/types/users.types';
 import CommentsSection from '@/features/comments/CommentsSection';
@@ -44,7 +47,7 @@ export default function CollectionPage() {
   const username = params.username as string;
   const slug = params.slug as string;
 
-  const [collection, setCollection] = useState<CollectionResponse | null>(null);
+  const [collection, setCollection] = useState<CollectionDetailResponse | null>(null);
   const [items, setItems] = useState<CollectionItemWithDetails[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfileResponse | null>(null);
   const [loading, setLoading] = useState(true);
@@ -56,23 +59,14 @@ export default function CollectionPage() {
         setLoading(true);
         setError(null);
 
-        // Fetch collection by slug
-        const collectionData = await collectionsApi.getBySlug(slug);
+        const collectionData = await collectionsApi.getDetailBySlug(slug);
         setCollection(collectionData);
 
-        // Fetch user profile for metadata
         const profileData = await usersApi.getProfile(collectionData.userId);
         setUserProfile(profileData);
 
-        // Fetch collection items
-        const itemsPage = await collectionsApi.getItems(collectionData.id, {
-          size: 100, // Get all items
-          sort: collectionData.isRanked ? 'rank,asc' : 'createdAt,asc',
-        });
-
-        // Fetch item details for each collection item
         const itemsWithDetails = await Promise.all(
-          itemsPage.content.map(async (collectionItem) => {
+          collectionData.items.map(async (collectionItem) => {
             try {
               const itemDetails = await itemsApi.getById(collectionItem.itemId);
               return {

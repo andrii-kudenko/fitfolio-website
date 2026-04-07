@@ -210,7 +210,7 @@ function ItemsPageContent() {
             </Link>
             <ChevronRight className="w-4 h-4" />
             <Link href="/items" className="text-white underline">
-              Search
+              Items
             </Link>
           </div>
         </nav>
@@ -223,7 +223,7 @@ function ItemsPageContent() {
             {smartSearch.isLoading ? (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
                 {Array.from({ length: 8 }).map((_, i) => (
-                  <div key={i} className="w-[260px] min-h-[260px] bg-white/5 rounded-lg animate-pulse" />
+                  <div key={i} className="min-w-0 min-h-[260px] bg-white/5 rounded-lg animate-pulse" />
                 ))}
               </div>
             ) : smartSearch.items.length === 0 ? (
@@ -233,7 +233,11 @@ function ItemsPageContent() {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
                 {smartSearch.items.map((item) => (
-                  <ItemCard key={item.id} item={itemSearchResultToItemFullResponse(item)} />
+                  <ItemCard
+                    key={item.id}
+                    layout="grid"
+                    item={itemSearchResultToItemFullResponse(item)}
+                  />
                 ))}
               </div>
             )}
@@ -414,7 +418,7 @@ function ItemsPageContent() {
                 {Array.from({ length: 8 }).map((_, i) => (
                   <div
                     key={i}
-                    className="w-[260px] min-h-[260px] bg-white/5 rounded-lg animate-pulse"
+                    className="min-w-0 min-h-[260px] bg-white/5 rounded-lg animate-pulse"
                   />
                 ))}
               </div>
@@ -426,7 +430,7 @@ function ItemsPageContent() {
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
                   {itemFullResponses.map((item) => (
-                    <ItemCard key={item.item.id} item={item} />
+                    <ItemCard key={item.item.id} layout="grid" item={item} />
                   ))}
                 </div>
 

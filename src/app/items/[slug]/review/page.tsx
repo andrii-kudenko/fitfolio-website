@@ -64,6 +64,18 @@ const CLIMATE_OPTIONS = [
 
 const SIZE_OPTIONS = ['XS', 'S', 'M', 'L', 'XL', 'XXL', '2XL'];
 
+function readLoggedInUserId(): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('fitfolio_logged_in');
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === 'string' ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
 export default function WriteReviewPage() {
   const params = useParams();
   const router = useRouter();
@@ -99,7 +111,7 @@ export default function WriteReviewPage() {
     
     setLoading(true);
     itemsApi
-      .getBySlugFull(slug)
+      .getBySlugFull(slug, readLoggedInUserId())
       .then(async (itemData) => {
         setItem(itemData);
         // Fetch parent category if category has a parentId

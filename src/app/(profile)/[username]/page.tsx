@@ -160,7 +160,7 @@ export default function ProfilePage() {
 
               {/* Stats row */}
               <div className="grid grid-cols-3 gap-3 text-center text-xs md:grid-cols-5">
-                <ProfileStat label="ITEMS/REVIEWS" value="315" />
+                {/* <ProfileStat label="ITEMS/REVIEWS" value="315" /> */}
                 <ProfileStat label="COLLECTIONS" value={profile.collectionsCount.toString()} />
                 <ProfileStat label="TIER LISTS" value={profile.tierListsCount.toString()} />
                 <ProfileStat label="FOLLOWING" value={profile.followingCount.toString()} />
@@ -195,7 +195,7 @@ export default function ProfilePage() {
               username={profile.username}
               avatarUrl={profile.avatarUrl}
             />
-          )}
+          )}          
           {activeTab === "Collections" && profile && <CollectionsTab userId={profile.userId} username={username} />}
           {activeTab === "Tier-lists" && profile && <TierListsTab userId={profile.userId} username={username} />}
           {activeTab === "Following" && <FollowingTab />}

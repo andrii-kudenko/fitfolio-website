@@ -2,7 +2,8 @@ import { api } from "@/shared/lib/api";
 import type {
   CollectionCreate,
   CollectionResponse,
-  CollectionPage,
+  CollectionViewerPage,
+  CollectionDetailResponse,
   CollectionLikeCreate,
   CollectionLikeResponse,
   CollectionSaveCreate,
@@ -31,15 +32,22 @@ export const collectionsApi = {
 
   getForUser: async (
     userId: string,
-    params?: { page?: number; size?: number; sort?: string }
-  ): Promise<CollectionPage> => {
-    const { data } = await api.get<CollectionPage>(
+    params?: {
+      page?: number;
+      size?: number;
+      sort?: string;
+      /** When set, each row includes isLiked / isSaved / isCommented for this user. */
+      viewerUserId?: string | null;
+    }
+  ): Promise<CollectionViewerPage> => {
+    const { data } = await api.get<CollectionViewerPage>(
       `/users/${userId}/collections`,
       {
         params: {
           page: params?.page ?? 0,
           size: params?.size ?? 20,
           ...(params?.sort ? { sort: params.sort } : {}),
+          ...(params?.viewerUserId ? { viewerUserId: params.viewerUserId } : {}),
         },
       }
     );
@@ -54,6 +62,13 @@ export const collectionsApi = {
   getBySlug: async (slug: string): Promise<CollectionResponse> => {
     const { data } = await api.get<CollectionResponse>(
       `/collections/slug/${slug}`
+    );
+    return data;
+  },
+
+  getDetailBySlug: async (slug: string): Promise<CollectionDetailResponse> => {
+    const { data } = await api.get<CollectionDetailResponse>(
+      `/collections/slug/${slug}/detail`
     );
     return data;
   },

@@ -3,6 +3,7 @@ import {
   ItemCreate,
   ItemResponse,
   ItemPage,
+  ItemViewerPage,
   ItemLikeResponse,
   ItemLikeCreate,
   ItemFullResponse,
@@ -23,8 +24,12 @@ export const itemsApi = {
     return data; // { content, page }
   },
 
-  getTopRecommended: async (): Promise<ItemFullResponse[]> => {
-    const { data } = await api.get<ItemFullResponse[]>("/items/top-recommended");
+  getTopRecommended: async (
+    viewerUserId?: string | null
+  ): Promise<ItemFullResponse[]> => {
+    const { data } = await api.get<ItemFullResponse[]>("/items/top-recommended", {
+      params: viewerUserId ? { viewerUserId } : {},
+    });
     return data;
   },
 
@@ -38,8 +43,45 @@ export const itemsApi = {
     return data;
   },
 
-  getBySlugFull: async (slug: string): Promise<ItemFullResponse> => {
-    const { data } = await api.get<ItemFullResponse>(`/items/slug/${slug}/full`);
+  getBySlugFull: async (
+    slug: string,
+    viewerUserId?: string | null
+  ): Promise<ItemFullResponse> => {
+    const { data } = await api.get<ItemFullResponse>(`/items/slug/${slug}/full`, {
+      params: viewerUserId ? { viewerUserId } : {},
+    });
+    return data;
+  },
+
+  /** Full payload + related entities; increments view count (use for product page). */
+  getBySlugDetail: async (
+    slug: string,
+    viewerUserId?: string | null
+  ): Promise<ItemFullResponse> => {
+    const { data } = await api.get<ItemFullResponse>(`/items/slug/${slug}/detail`, {
+      params: viewerUserId ? { viewerUserId } : {},
+    });
+    return data;
+  },
+
+  /** Items where {@code contributorId} equals {@code userId}. */
+  getForContributor: async (
+    userId: string,
+    params?: {
+      page?: number;
+      size?: number;
+      sort?: string;
+      viewerUserId?: string | null;
+    }
+  ): Promise<ItemViewerPage> => {
+    const { data } = await api.get<ItemViewerPage>(`/users/${userId}/items`, {
+      params: {
+        page: params?.page ?? 0,
+        size: params?.size ?? 20,
+        ...(params?.sort ? { sort: params.sort } : {}),
+        ...(params?.viewerUserId ? { viewerUserId: params.viewerUserId } : {}),
+      },
+    });
     return data;
   },
 

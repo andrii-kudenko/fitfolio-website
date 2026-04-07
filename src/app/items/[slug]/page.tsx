@@ -14,6 +14,18 @@ import CommentsSection from '@/features/comments/CommentsSection';
 import { ItemReviewsTab } from '@/features/reviews/components/ItemReviewsTab';
 
 // Mock related items
+function readLoggedInUserId(): string | null {
+  if (typeof window === 'undefined') return null;
+  const raw = localStorage.getItem('fitfolio_logged_in');
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === 'string' ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
 const mockRelatedItems = [
   {
     title: "The North Face Jacket",
@@ -81,7 +93,7 @@ export default function ItemPage() {
     setShowSkeletonOverlay(true);
 
     itemsApi
-      .getBySlugFull(slug)
+      .getBySlugDetail(slug, readLoggedInUserId())
       .then(setItem)
       .catch((err) => {
         console.error('Error fetching item:', err);
