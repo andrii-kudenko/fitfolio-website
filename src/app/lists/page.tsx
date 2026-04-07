@@ -3,7 +3,7 @@
 import { Suspense, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Search } from "lucide-react";
 import { useListsSearch } from "@/features/search/hooks/useListsSearch";
 import {
   collectionSearchCardToWithItems,
@@ -31,23 +31,10 @@ function ListsPageContent() {
 
   const { data, isLoading, error } = useListsSearch(qParam);
 
-  const handleInputChange = (value: string) => {
-    setInput(value);
-    if (urlDebounceRef.current) clearTimeout(urlDebounceRef.current);
-    urlDebounceRef.current = setTimeout(() => {
-      urlDebounceRef.current = null;
-      const params = new URLSearchParams();
-      const trimmed = value.trim();
-      if (trimmed) params.set("q", trimmed);
-      const qs = params.toString();
-      router.replace(qs ? `/lists?${qs}` : "/lists");
-    }, 150);
-  };
 
-  const collections = data?.collections ?? [];
-  const tierLists = data?.tierLists ?? [];
+  const results = data?.results ?? [];
   const hasQuery = qParam.trim().length > 0;
-  const hasResults = collections.length > 0 || tierLists.length > 0;
+  const hasResults = results.length > 0;
 
   return (
     <main className="bg-black text-white pt-8">
@@ -62,15 +49,11 @@ function ListsPageContent() {
           </div>
         </nav>
 
+
+
         {error && <div className="text-red-400 text-sm mb-4">{error}</div>}
 
-        {!hasQuery && (
-          <div className="text-center py-16 text-white/60 text-sm">
-            Type a name to find public collections and tier lists.
-          </div>
-        )}
-
-        {hasQuery && isLoading && (
+        {isLoading && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
             {Array.from({ length: 8 }).map((_, i) => (
               <div
@@ -81,55 +64,61 @@ function ListsPageContent() {
           </div>
         )}
 
-        {hasQuery && !isLoading && !hasResults && (
+        {!isLoading && !hasResults && !hasQuery && (
+          <div className="text-center py-16 text-white/60 text-sm">
+            No public collections or tier lists yet.
+          </div>
+        )}
+
+        {!isLoading && !hasResults && hasQuery && (
           <div className="text-center py-16 text-white/60 text-sm">
             No collections or tier lists matched &ldquo;{qParam.trim()}&rdquo;.
           </div>
         )}
 
-        {hasQuery && !isLoading && hasResults && (
-          <div className="space-y-10">
-            {collections.length > 0 && (
-              <section>
-                <h2 className="text-white/80 text-sm font-medium uppercase tracking-wide mb-4">
-                  Collections ({collections.length})
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                  {collections.map((row) => {
-                    const col = collectionSearchCardToWithItems(row);
-                    return (
-                      <CollectionCard
-                        key={col.id}
-                        layout="grid"
-                        collection={col}
-                        username={row.ownerUsername}
-                      />
-                    );
-                  })}
-                </div>
-              </section>
-            )}
-
-            {tierLists.length > 0 && (
-              <section>
-                <h2 className="text-white/80 text-sm font-medium uppercase tracking-wide mb-4">
-                  Tier lists ({tierLists.length})
-                </h2>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
-                  {tierLists.map((row) => {
-                    const tl = tierListSearchCardToWithTiers(row);
-                    return (
-                      <TierListCard
-                        key={tl.id}
-                        layout="grid"
-                        tierList={tl}
-                        username={row.ownerUsername}
-                      />
-                    );
-                  })}
-                </div>
-              </section>
-            )}
+        {!isLoading && hasResults && (
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+            {results.map((row) => {
+              if (row.kind === "COLLECTION" && row.collection) {
+                const payload = row.collection;
+                const col = collectionSearchCardToWithItems(payload);
+                return (
+                  <div key={`c-${col.id}`} className="relative min-w-0">
+                    {/* {hasQuery && (
+                      <span
+                        className="pointer-events-none absolute -top-1 right-0 z-20 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ff-cyan/90 ring-1 ring-white/10"
+                        title="Match strength"
+                      >
+                        {Math.round(row.relevanceScore * 100)}%
+                      </span>
+                    )} */}
+                    <CollectionCard
+                      layout="grid"
+                      collection={col}
+                      username={payload.ownerUsername}
+                    />
+                  </div>
+                );
+              }
+              if (row.kind === "TIER_LIST" && row.tierList) {
+                const payload = row.tierList;
+                const tl = tierListSearchCardToWithTiers(payload);
+                return (
+                  <div key={`t-${tl.id}`} className="relative min-w-0">
+                    {/* {hasQuery && (
+                      <span
+                        className="pointer-events-none absolute -top-1 right-0 z-20 rounded bg-black/75 px-1.5 py-0.5 text-[10px] font-medium tabular-nums text-ff-cyan/90 ring-1 ring-white/10"
+                        title="Match strength"
+                      >
+                        {Math.round(row.relevanceScore * 100)}%
+                      </span>
+                    )} */}
+                    <TierListCard layout="grid" tierList={tl} username={payload.ownerUsername} />
+                  </div>
+                );
+              }
+              return null;
+            })}
           </div>
         )}
       </div>

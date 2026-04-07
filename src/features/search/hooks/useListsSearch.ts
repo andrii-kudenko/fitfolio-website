@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { searchApi } from "../api/search.api";
-import type { CollectionsAndTierListsSearchResponse } from "../types/listsSearch.types";
+import type { ListsSearchResponse } from "../types/listsSearch.types";
 
 const DEBOUNCE_MS = 350;
 
@@ -19,19 +19,19 @@ function readLoggedInUserId(): string | null {
 }
 
 export interface UseListsSearchResult {
-  data: CollectionsAndTierListsSearchResponse | null;
+  data: ListsSearchResponse | null;
   isLoading: boolean;
   error: string | null;
   refetch: () => void;
 }
 
 /**
- * Debounced search for public collections + tier lists by title.
- * `query` should usually come from the URL `q` param; updates debounce network calls.
+ * Unified lists feed: latest public lists when `query` is empty; debounced relevance search when non-empty.
+ * `query` usually comes from URL `q`.
  */
 export function useListsSearch(query: string, limit = 20): UseListsSearchResult {
-  const [data, setData] = useState<CollectionsAndTierListsSearchResponse | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [data, setData] = useState<ListsSearchResponse | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const abortRef = useRef<AbortController | null>(null);
   const requestIdRef = useRef(0);
@@ -39,14 +39,6 @@ export function useListsSearch(query: string, limit = 20): UseListsSearchResult 
   const runFetch = useCallback(
     (q: string) => {
       const trimmed = q.trim();
-      if (!trimmed) {
-        if (abortRef.current) abortRef.current.abort();
-        setData({ collections: [], tierLists: [] });
-        setIsLoading(false);
-        setError(null);
-        return;
-      }
-
       const id = ++requestIdRef.current;
       if (abortRef.current) abortRef.current.abort();
       abortRef.current = new AbortController();
@@ -57,8 +49,12 @@ export function useListsSearch(query: string, limit = 20): UseListsSearchResult 
       setError(null);
 
       searchApi
-        .searchCollectionsAndTierLists(
-          { query: trimmed, viewerUserId: viewerUserId ?? undefined, limit },
+        .searchLists(
+          {
+            ...(trimmed ? { query: trimmed } : {}),
+            viewerUserId: viewerUserId ?? undefined,
+            limit,
+          },
           signal
         )
         .then((res) => {
@@ -81,7 +77,9 @@ export function useListsSearch(query: string, limit = 20): UseListsSearchResult 
   );
 
   useEffect(() => {
-    const t = window.setTimeout(() => runFetch(query), DEBOUNCE_MS);
+    const trimmed = query.trim();
+    const delay = trimmed ? DEBOUNCE_MS : 0;
+    const t = window.setTimeout(() => runFetch(query), delay);
     return () => clearTimeout(t);
   }, [query, runFetch]);
 

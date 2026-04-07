@@ -5,7 +5,7 @@ import {
   SearchSort,
   SmartSearchResponse,
 } from "../types/search.types";
-import type { CollectionsAndTierListsSearchResponse } from "../types/listsSearch.types";
+import type { ListsSearchResponse } from "../types/listsSearch.types";
 
 export interface SearchParams {
   query: string;
@@ -123,22 +123,23 @@ export const searchApi = {
   },
 
   /**
-   * Public collections + tier lists by title (substring). Optional viewer for like/save/comment flags.
-   * GET /api/search/collections-and-tierlists
+   * Public collections + tier lists in one list: latest first when {@code query} is omitted/blank;
+   * title relevance when {@code query} is set.
+   * GET /api/search/collections-and-tierlists/unified
    */
-  searchCollectionsAndTierLists: async (
-    params: { query: string; viewerUserId?: string; limit?: number },
+  searchLists: async (
+    params: { query?: string; viewerUserId?: string; limit?: number },
     signal?: AbortSignal
-  ): Promise<CollectionsAndTierListsSearchResponse> => {
+  ): Promise<ListsSearchResponse> => {
     const q = new URLSearchParams();
-    q.set("query", params.query.trim());
+    const trimmed = params.query?.trim();
+    if (trimmed) q.set("query", trimmed);
     if (params.viewerUserId) q.set("viewerUserId", params.viewerUserId);
     q.set("limit", String(params.limit ?? 20));
-    const { data } = await api.get<CollectionsAndTierListsSearchResponse>(
-      `/search/collections-and-tierlists?${q.toString()}`,
+    const { data } = await api.get<ListsSearchResponse>(
+      `/search/collections-and-tierlists/unified?${q.toString()}`,
       { signal }
     );
     return data;
   },
 };
-

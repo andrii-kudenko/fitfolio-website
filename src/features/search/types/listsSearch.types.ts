@@ -1,7 +1,7 @@
 import type { CollectionViewerResponse } from "@/features/collections/types/collections.types";
 import type { TierListViewerResponse, TierResponse } from "@/features/tierlists/types/tierlists.types";
 
-/** GET /api/search/collections-and-tierlists — preview line item */
+/** Preview tile for collection / tier-list cards */
 export interface ListsSearchPreviewItem {
   id: string;
   imageUrl: string | null;
@@ -24,7 +24,16 @@ export interface TierListSearchCardPayload {
   tiers: TierWithPreviewItemsPayload[];
 }
 
-export interface CollectionsAndTierListsSearchResponse {
-  collections: CollectionSearchCardPayload[];
-  tierLists: TierListSearchCardPayload[];
+/** GET /api/search/collections-and-tierlists/unified */
+export type ListsSearchKind = "COLLECTION" | "TIER_LIST";
+
+export interface ListsSearchRow {
+  kind: ListsSearchKind;
+  relevanceScore: number;
+  collection?: CollectionSearchCardPayload;
+  tierList?: TierListSearchCardPayload;
+}
+
+export interface ListsSearchResponse {
+  results: ListsSearchRow[];
 }
