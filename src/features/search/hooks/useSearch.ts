@@ -11,6 +11,14 @@ import type {
 const DEBOUNCE_MS = 300;
 const DEFAULT_LIMIT = 20;
 
+function sameStringArray(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 export interface UseSearchState {
   query: string;
   selectedBrandIds: string[];
@@ -136,7 +144,6 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
         facetsAbortRef.current.signal
       )
       .then((data) => {
-        console.log("facets", data);
         if (id === facetsRequestIdRef.current) setFacets(data);
       })
       .catch((err) => {
@@ -203,27 +210,39 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
   }, []);
 
   const setSelectedBrandIds = useCallback((ids: string[]) => {
-    setState((s) => ({ ...s, selectedBrandIds: ids, page: 0 }));
+    setState((s) =>
+      sameStringArray(s.selectedBrandIds, ids) ? s : { ...s, selectedBrandIds: ids, page: 0 }
+    );
   }, []);
 
   const setSelectedCategoryIds = useCallback((ids: string[]) => {
-    setState((s) => ({ ...s, selectedCategoryIds: ids, page: 0 }));
+    setState((s) =>
+      sameStringArray(s.selectedCategoryIds, ids)
+        ? s
+        : { ...s, selectedCategoryIds: ids, page: 0 }
+    );
   }, []);
 
   const setSelectedColors = useCallback((colors: string[]) => {
-    setState((s) => ({ ...s, selectedColors: colors, page: 0 }));
+    setState((s) =>
+      sameStringArray(s.selectedColors, colors) ? s : { ...s, selectedColors: colors, page: 0 }
+    );
   }, []);
 
   const setSelectedDepartments = useCallback((departments: string[]) => {
-    setState((s) => ({ ...s, selectedDepartments: departments, page: 0 }));
+    setState((s) =>
+      sameStringArray(s.selectedDepartments, departments)
+        ? s
+        : { ...s, selectedDepartments: departments, page: 0 }
+    );
   }, []);
 
   const setMinPrice = useCallback((v: number | undefined) => {
-    setState((s) => ({ ...s, minPrice: v, page: 0 }));
+    setState((s) => (s.minPrice === v ? s : { ...s, minPrice: v, page: 0 }));
   }, []);
 
   const setMaxPrice = useCallback((v: number | undefined) => {
-    setState((s) => ({ ...s, maxPrice: v, page: 0 }));
+    setState((s) => (s.maxPrice === v ? s : { ...s, maxPrice: v, page: 0 }));
   }, []);
 
   const setSort = useCallback((sort: SearchSort) => {

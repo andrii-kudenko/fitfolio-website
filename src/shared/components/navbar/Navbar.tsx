@@ -53,11 +53,14 @@ export default function FitFolioNavbarDesktop({
   const searchParams = useSearchParams();
   const isItemsPage = pathname === "/items";
   const isListsPage = pathname === "/lists";
-  const inlineSearchPage = isItemsPage || isListsPage;
+  const isMembersPage = pathname === "/members";
+  const inlineSearchPage = isItemsPage || isListsPage || isMembersPage;
   const itemsPageQuery = isItemsPage ? (searchParams.get("q") ?? "") : "";
   const listsPageQuery = isListsPage ? (searchParams.get("q") ?? "") : "";
+  const membersPageQuery = isMembersPage ? (searchParams.get("q") ?? "") : "";
   const hasHydratedItemsInputRef = useRef(false);
   const hasHydratedListsInputRef = useRef(false);
+  const hasHydratedMembersInputRef = useRef(false);
 
   // Hydrate inline search inputs from URL on /items and /lists
   useEffect(() => {
@@ -79,13 +82,22 @@ export default function FitFolioNavbarDesktop({
     } else {
       hasHydratedListsInputRef.current = false;
     }
-  }, [isItemsPage, isListsPage, itemsPageQuery, listsPageQuery, searchParams]);
+    if (isMembersPage) {
+      if (!hasHydratedMembersInputRef.current) {
+        hasHydratedMembersInputRef.current = true;
+        setMembersPageInput(membersPageQuery);
+      }
+    } else {
+      hasHydratedMembersInputRef.current = false;
+    }
+  }, [isItemsPage, isListsPage, isMembersPage, itemsPageQuery, listsPageQuery, membersPageQuery, searchParams]);
 
   // Clear timers on unmount
   useEffect(() => {
     return () => {
       if (itemsPageUrlUpdateTimer.current) clearTimeout(itemsPageUrlUpdateTimer.current);
       if (listsPageUrlUpdateTimer.current) clearTimeout(listsPageUrlUpdateTimer.current);
+      if (membersPageUrlUpdateTimer.current) clearTimeout(membersPageUrlUpdateTimer.current);
       if (quickSearchDebounceTimer.current) clearTimeout(quickSearchDebounceTimer.current);
     };
   }, []);
@@ -117,12 +129,14 @@ export default function FitFolioNavbarDesktop({
   const [searchInput, setSearchInput] = useState("");
   const [itemsPageInput, setItemsPageInput] = useState("");
   const [listsPageInput, setListsPageInput] = useState("");
+  const [membersPageInput, setMembersPageInput] = useState("");
   const [searchResults, setSearchResults] = useState<ItemSearchResult[]>([]);
   const [searchMode, setSearchMode] = useState<"filters" | "smart">("filters");
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearchingItems, setIsSearchingItems] = useState(false);
   const itemsPageUrlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const listsPageUrlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const membersPageUrlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickSearchDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
 
@@ -199,7 +213,9 @@ export default function FitFolioNavbarDesktop({
       ? itemsPageInput.trim()
       : isListsPage
         ? listsPageInput.trim()
-        : searchInput.trim();
+        : isMembersPage
+          ? membersPageInput.trim()
+          : searchInput.trim();
     if (!q) {
       setSearchResults([]);
       setHasSearched(false);
@@ -227,6 +243,18 @@ export default function FitFolioNavbarDesktop({
       const params = new URLSearchParams();
       params.set("q", q);
       router.replace(`/lists?${params.toString()}`);
+      return;
+    }
+
+    if (isMembersPage) {
+      if (membersPageUrlUpdateTimer.current) {
+        clearTimeout(membersPageUrlUpdateTimer.current);
+        membersPageUrlUpdateTimer.current = null;
+      }
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      const query = params.toString();
+      router.replace(query ? `/members?${query}` : "/members");
       return;
     }
 
@@ -600,6 +628,29 @@ export default function FitFolioNavbarDesktop({
                           }}
                           onKeyDown={(e) => e.key === "Enter" && runSearch()}
                           aria-label="Search lists"
+                        />
+                      ) : isMembersPage ? (
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          placeholder="Search members by username…"
+                          className="w-full h-12 pl-4 pr-4 rounded-full bg-[#000500] text-white placeholder:text-white/40 outline-none ring-2 ring-ff-cyan transition duration-300"
+                          value={membersPageInput}
+                          onChange={(e) => {
+                            const q = e.target.value;
+                            setMembersPageInput(q);
+                            if (membersPageUrlUpdateTimer.current)
+                              clearTimeout(membersPageUrlUpdateTimer.current);
+                            membersPageUrlUpdateTimer.current = setTimeout(() => {
+                              membersPageUrlUpdateTimer.current = null;
+                              const params = new URLSearchParams();
+                              if (q.trim()) params.set("q", q);
+                              const query = params.toString();
+                              router.replace(query ? `/members?${query}` : "/members");
+                            }, 150);
+                          }}
+                          onKeyDown={(e) => e.key === "Enter" && runSearch()}
+                          aria-label="Search members"
                         />
                       ) : (
                         <input

@@ -36,6 +36,8 @@ function ListsPageContent() {
   const hasQuery = qParam.trim().length > 0;
   const hasResults = results.length > 0;
 
+  console.log("Hello from ListsPageContent");
+
   return (
     <main className="bg-black text-white pt-8">
       <div className="max-w-7xl mx-auto px-4 py-8">
