@@ -1,5 +1,5 @@
 import type { NextConfig } from "next";
-
+ 
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -33,10 +33,10 @@ const nextConfig: NextConfig = {
             },
           ]
         : []),
-
+ 
       // Add more domains as needed when you encounter them
     ],
   },
 };
-
+ 
 export default nextConfig;
