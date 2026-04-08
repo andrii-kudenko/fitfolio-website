@@ -1,10 +1,22 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { Star, Eye, MessageCircle, Search, ChevronRight, HeartIcon, HeartCrackIcon, HeartPlus } from 'lucide-react';
+import {
+  Star,
+  MessageCircle,
+  Search,
+  ChevronRight,
+  HeartIcon,
+  HeartCrackIcon,
+  HeartPlus,
+  BookmarkIcon,
+} from 'lucide-react';
 import { itemsApi } from '@/features/items/api/items.api';
-import { ItemFullResponse } from '@/features/items/types/items.types';
+import {
+  ItemFullResponse,
+  ItemViewerResponse,
+} from '@/features/items/types/items.types';
 import { useParams } from 'next/navigation';
 import { reviewsApi } from '@/features/reviews/api/reviews.api';
 import { ReviewResponse, ReviewPage } from '@/features/reviews/types/reviews.types';
@@ -24,6 +36,22 @@ function readLoggedInUserId(): string | null {
   } catch {
     return null;
   }
+}
+
+function isItemViewerRow(item: ItemFullResponse['item']): item is ItemViewerResponse {
+  return (
+    'isLiked' in item &&
+    'isSaved' in item &&
+    'isCommented' in item &&
+    typeof (item as ItemViewerResponse).isLiked === 'boolean'
+  );
+}
+
+function formatMetricCount(count: number): string {
+  if (count >= 1000) {
+    return (count / 1000).toFixed(1) + 'k';
+  }
+  return count.toString();
 }
 
 const mockRelatedItems = [
@@ -81,9 +109,74 @@ export default function ItemPage() {
   const [sortBy, setSortBy] = useState('newest');
   const [userProfiles, setUserProfiles] = useState<Record<string, UserProfileResponse>>({});
   const [fitProfiles, setFitProfiles] = useState<Record<string, FitProfileResponse>>({});
+  const [viewerUserId, setViewerUserId] = useState<string | null>(null);
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(0);
+  const [liking, setLiking] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const [saveCount, setSaveCount] = useState(0);
+  const [saving, setSaving] = useState(false);
   const relatedItems = mockRelatedItems;
   const params = useParams();
   const slug = params.slug as string;
+  const viewerRow = item && isItemViewerRow(item.item) ? item.item : null;
+  const reviewsCommentsSectionRef = useRef<HTMLElement>(null);
+
+  const goToReviewsCommentsSection = useCallback((tab: 'reviews' | 'comments') => {
+    setActiveTab(tab);
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        reviewsCommentsSectionRef.current?.scrollIntoView({
+          behavior: 'smooth',
+          block: 'start',
+        });
+      });
+    });
+  }, []);
+
+  useEffect(() => {
+    setViewerUserId(readLoggedInUserId());
+  }, []);
+
+  useEffect(() => {
+    if (!item) return;
+    setLikeCount(item.item.likeCount ?? 0);
+  }, [item?.item.id, item?.item.likeCount]);
+
+  useEffect(() => {
+    if (!item) return;
+    setSaveCount(item.item.saveCount ?? 0);
+  }, [item?.item.id, item?.item.saveCount]);
+
+  useEffect(() => {
+    if (!viewerRow) return;
+    setLiked(viewerRow.isLiked);
+    setSaved(viewerRow.isSaved);
+  }, [viewerRow?.id, viewerRow?.isLiked, viewerRow?.isSaved]);
+
+  useEffect(() => {
+    if (viewerRow) return;
+    const e = item?.viewerEngagement;
+    if (!e) return;
+    setLiked(e.isLiked);
+    setSaved(e.isSaved);
+  }, [item?.item.id, item?.viewerEngagement, viewerRow]);
+
+  useEffect(() => {
+    if (!item || viewerRow || item.viewerEngagement != null) return;
+    const uid = viewerUserId;
+    if (!uid) {
+      setSaved(false);
+      return;
+    }
+    let cancelled = false;
+    itemsApi.isSaved(uid, item.item.id).then((v) => {
+      if (!cancelled) setSaved(v);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [viewerUserId, item, viewerRow]);
 
   useEffect(() => {
     setLoading(true);
@@ -177,6 +270,60 @@ export default function ItemPage() {
       })
       .finally(() => setReviewsLoading(false));
   }, [item?.item?.id, sortBy]);
+
+  const onItemLikeClick = useCallback(async () => {
+    const uid = viewerUserId ?? readLoggedInUserId();
+    if (!item || !uid) {
+      window.location.href = '/login';
+      return;
+    }
+    if (liking) return;
+    setLiking(true);
+    try {
+      if (liked) {
+        await itemsApi.unlike(uid, item.item.id);
+        setLiked(false);
+        setLikeCount((c) => Math.max(0, c - 1));
+      } else {
+        await itemsApi.like({ userId: uid, itemId: item.item.id });
+        setLiked(true);
+        setLikeCount((c) => c + 1);
+      }
+    } catch {
+      // keep UI unchanged on failure
+    } finally {
+      setLiking(false);
+    }
+  }, [item, viewerUserId, liked, liking]);
+
+  const onItemSaveClick = useCallback(async () => {
+    const uid = viewerUserId ?? readLoggedInUserId();
+    if (!item || !uid) {
+      window.location.href = '/login';
+      return;
+    }
+    if (saving) return;
+    setSaving(true);
+    try {
+      if (saved) {
+        await itemsApi.unsave(uid, item.item.id);
+        setSaved(false);
+        setSaveCount((c) => Math.max(0, c - 1));
+      } else {
+        await itemsApi.save({ userId: uid, itemId: item.item.id });
+        setSaved(true);
+        setSaveCount((c) => c + 1);
+      }
+    } catch {
+      // keep UI unchanged on failure
+    } finally {
+      setSaving(false);
+    }
+  }, [item, viewerUserId, saved, saving]);
+
+  const isReviewed = item?.viewerEngagement?.isReviewed ?? false;
+  const isCommented =
+    (viewerRow?.isCommented ?? item?.viewerEngagement?.isCommented) === true;
 
   const isLoaded = !!item && !loading && !error;
   const ease = 'ease-[cubic-bezier(.2,.8,.2,1)]';
@@ -355,38 +502,85 @@ export default function ItemPage() {
                     </>
                   )}
 
-                  {/* Rating */}
+                  {/* Engagement: star + rating on top; like / comment / save below */}
                   {loading ? (
-                    <Skeleton className="h-8 w-36" />
-                  ) : (
-                    <div
-                      className="flex transition-all duration-300 gap-3
-                      bg-black/80 rounded-br-xl"
-                    >
-                        <div className="flex items-center justify-center gap-[6px]">
-                          <Star className="text-yellow-200 size-8" strokeWidth={1.5} />
-                        <span className="text-white text-xl font-medium">8.9</span>
+                    <div className="max-w-lg space-y-3">
+                      <Skeleton className="h-10 w-36 rounded-xl" />
+                      <Skeleton className="h-12 w-full rounded-xl" />
+                    </div>
+                  ) : item ? (
+                    <div className="max-w-lg space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => goToReviewsCommentsSection('reviews')}
+                        className="inline-flex items-center gap-2 rounded-xl bg-black/80 px-4 py-3 text-left transition-opacity hover:opacity-90"
+                        title={
+                          isReviewed
+                            ? 'You left a review for this item — jump to reviews'
+                            : 'Jump to reviews'
+                        }
+                        aria-label="Go to reviews section"
+                      >
+                        <Star
+                          className={`size-8 shrink-0 text-yellow-400 ${isReviewed ? 'fill-yellow-400' : ''}`}
+                          strokeWidth={1.5}
+                        />
+                        <span className="text-2xl font-semibold tabular-nums leading-none text-white">
+                          {item.item.rating != null
+                            ? Number(item.item.rating).toFixed(1)
+                            : '—'}
+                        </span>
+                      </button>
+                      <div className="flex flex-wrap items-center gap-6 rounded-xl bg-black/80 px-4 py-3">
+                        <button
+                          type="button"
+                          onClick={onItemLikeClick}
+                          disabled={liking}
+                          className="flex items-center gap-2 rounded-md py-1 transition-opacity hover:opacity-90 disabled:opacity-50"
+                          aria-label={liked ? 'Unlike item' : 'Like item'}
+                          aria-pressed={liked}
+                        >
+                          <HeartIcon
+                            className={`size-8 shrink-0 ${liked ? 'fill-ff-cyan text-ff-cyan' : 'text-ff-cyan'}`}
+                            strokeWidth={1.5}
+                          />
+                          <span className="text-xl font-medium tabular-nums leading-none text-white">
+                            {formatMetricCount(likeCount)}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => goToReviewsCommentsSection('comments')}
+                          className="flex items-center gap-2 rounded-md py-1 text-left transition-opacity hover:opacity-90"
+                          aria-label="Go to comments section"
+                        >
+                          <MessageCircle
+                            className={`size-8 shrink-0 ${isCommented ? 'fill-ff-cyan text-ff-cyan' : 'text-ff-cyan'}`}
+                            strokeWidth={1.5}
+                          />
+                          <span className="text-xl font-medium tabular-nums leading-none text-white">
+                            {formatMetricCount(item.item.commentCount)}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={onItemSaveClick}
+                          disabled={saving}
+                          className="flex items-center gap-2 rounded-md py-1 transition-opacity hover:opacity-90 disabled:opacity-50"
+                          aria-label={saved ? 'Remove from saved' : 'Save item'}
+                          aria-pressed={saved}
+                        >
+                          <BookmarkIcon
+                            className={`size-8 shrink-0 ${saved ? 'fill-ff-cyan text-ff-cyan' : 'text-ff-cyan'}`}
+                            strokeWidth={1.5}
+                          />
+                          <span className="text-xl font-medium tabular-nums leading-none text-white">
+                            {formatMetricCount(saveCount)}
+                          </span>
+                        </button>
                       </div>
                     </div>
-                  )}
-
-                  {/* Metrcis */}
-                  <div
-                    className="flex rounded-tl-xl transition-all duration-300 gap-6 bg-black/80"
-                  >
-                    <div className="flex flex-col items-center gap-[1px]">
-                      <HeartIcon className="text-ff-cyan size-8" strokeWidth={1.5} />
-                      <span className="text-white text-base">1.2k</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-[1px]">
-                      <Eye className="text-ff-cyan size-8" strokeWidth={1.5} />
-                      <span className="text-white text-base">20k</span>
-                    </div>
-                    <div className="flex flex-col items-center gap-[1px]">
-                      <MessageCircle className="text-ff-cyan size-8" strokeWidth={1.5} />
-                      <span className="text-white text-base">326</span>
-                    </div>
-                  </div>
+                  ) : null}
 
                   {/* Description */}
                   <div className="text-white/70 text-base">
@@ -404,7 +598,8 @@ export default function ItemPage() {
         {/* Lists that include this item */}
         {/* Reviews Section */}
         <section
-          className={`mb-12 ${isLoaded ? contentEnter : ''}`}
+          ref={reviewsCommentsSectionRef}
+          className={`scroll-mt-24 mb-12 ${isLoaded ? contentEnter : ''}`}
         >
           {/* Tabs */}
           <div className="flex gap-2 mb-6">
@@ -439,6 +634,14 @@ export default function ItemPage() {
               onSortChange={setSortBy}
               userProfiles={userProfiles}
               fitProfiles={fitProfiles}
+              currentUserId={readLoggedInUserId()}
+              onReviewLikeUpdate={(reviewId, likeCount, likedByViewer) =>
+                setReviews((prev) =>
+                  prev.map((r) =>
+                    r.id === reviewId ? { ...r, likeCount, likedByViewer } : r
+                  )
+                )
+              }
             />
           )}
 

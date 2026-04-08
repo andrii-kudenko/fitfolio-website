@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronDown, ThumbsUp, MoreHorizontal, Star } from 'lucide-react';
+import { ChevronDown, ThumbsUp, Star } from 'lucide-react';
+import { reviewsApi } from '@/features/reviews/api/reviews.api';
 import type { ReviewResponse } from '@/features/reviews/types/reviews.types';
 import type { UserProfileResponse, FitProfileResponse } from '@/features/users/types/users.types';
 import { fitInfoFromProfile } from '@/features/reviews/utils/reviewDisplay';
@@ -19,6 +21,80 @@ export interface ItemReviewsTabProps {
   onSortChange: (sort: string) => void;
   userProfiles: Record<string, UserProfileResponse>;
   fitProfiles: Record<string, FitProfileResponse>;
+  currentUserId: string | null;
+  onReviewLikeUpdate?: (
+    reviewId: string,
+    likeCount: number,
+    likedByViewer: boolean
+  ) => void;
+}
+
+function ReviewLikeControl({
+  review,
+  currentUserId,
+  onLikeUpdate,
+}: {
+  review: ReviewResponse;
+  currentUserId: string | null;
+  onLikeUpdate: (likeCount: number, likedByViewer: boolean) => void;
+}) {
+  const [likes, setLikes] = useState(review.likeCount);
+  const [liked, setLiked] = useState(review.likedByViewer ?? false);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    setLikes(review.likeCount);
+    setLiked(review.likedByViewer ?? false);
+  }, [review.id, review.likeCount, review.likedByViewer]);
+
+  async function toggle() {
+    if (!currentUserId) {
+      alert('Please log in to like reviews.');
+      return;
+    }
+    if (busy) return;
+
+    const prevLiked = liked;
+    const prevLikes = likes;
+    const nextLiked = !prevLiked;
+    const nextCount = Math.max(0, prevLikes + (nextLiked ? 1 : -1));
+
+    setBusy(true);
+    setLiked(nextLiked);
+    setLikes(nextCount);
+
+    try {
+      if (nextLiked) {
+        await reviewsApi.like({ userId: currentUserId, reviewId: review.id });
+      } else {
+        await reviewsApi.unlike(currentUserId, review.id);
+      }
+      onLikeUpdate(nextCount, nextLiked);
+    } catch (e) {
+      console.error('Review like failed', e);
+      setLiked(prevLiked);
+      setLikes(prevLikes);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  const displayCount = likes;
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={busy}
+      title={!currentUserId ? 'Log in to like' : liked ? 'Unlike' : 'Like'}
+      className={`flex items-center gap-2 transition disabled:opacity-50 ${
+        liked ? 'text-ff-cyan' : 'text-slate-400 hover:text-white'
+      }`}
+    >
+      <ThumbsUp className={`h-4 w-4 shrink-0 ${liked ? 'fill-ff-cyan text-ff-cyan' : ''}`} />
+      <span className="text-sm tabular-nums">{displayCount}</span>
+    </button>
+  );
 }
 
 export function ItemReviewsTab({
@@ -29,6 +105,8 @@ export function ItemReviewsTab({
   onSortChange,
   userProfiles,
   fitProfiles,
+  currentUserId,
+  onReviewLikeUpdate,
 }: ItemReviewsTabProps) {
   return (
     <>
@@ -80,7 +158,7 @@ export function ItemReviewsTab({
                 className="border border-white/10 rounded-lg p-6"
               >
                 <div className="grid grid-cols-1 gap-6 sm:grid-cols-[1fr_5fr] sm:gap-8">
-                  <div className="flex flex-row items-center  gap-2 sm:flex-col max-sm:items-center">
+                  <div className="flex flex-row items-center justify-center gap-2 sm:flex-col max-sm:items-center">
                     <div className="w-10 h-10 shrink-0 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
                       {userProfile?.avatarUrl ? (
                         <Image
@@ -132,19 +210,13 @@ export function ItemReviewsTab({
                     )}
 
                     <div className="flex items-center gap-4">
-                      <button
-                        type="button"
-                        className="flex items-center gap-2 text-white/60 hover:text-white transition"
-                      >
-                        <ThumbsUp className="w-4 h-4" />
-                        <span className="text-sm">{review.likeCount || 0}</span>
-                      </button>
-                      <button
-                        type="button"
-                        className="text-white/60 hover:text-white transition"
-                      >
-                        <MoreHorizontal className="w-4 h-4" />
-                      </button>
+                      <ReviewLikeControl
+                        review={review}
+                        currentUserId={currentUserId}
+                        onLikeUpdate={(likeCount, likedByViewer) =>
+                          onReviewLikeUpdate?.(review.id, likeCount, likedByViewer)
+                        }
+                      />
                     </div>
                   </div>
                 </div>
