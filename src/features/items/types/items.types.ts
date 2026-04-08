@@ -47,12 +47,25 @@ export interface ItemUserEngagement {
   isReviewed: boolean;
 }
 
+/** Mirrors API {@code ItemInsightsResponse} — AI summary of reviews when available. */
+export interface ItemReviewInsights {
+  summary: string;
+  pros: string[];
+  cons: string[];
+  themes: string[];
+  confidence: number;
+  sourceReviewCount: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface ItemFullResponse {
   item: ItemResponse;
   brand?: BrandResponse;
   category?: CategoryResponse;
   contributor?: UserProfileResponse;
   viewerEngagement?: ItemUserEngagement | null;
+  reviewInsights?: ItemReviewInsights | null;
 }
 
 export type ItemPage = PageResult<ItemResponse>;

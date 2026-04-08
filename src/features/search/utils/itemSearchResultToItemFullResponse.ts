@@ -35,5 +35,12 @@ export function itemSearchResultToItemFullResponse(
     saveCount: r.saveCount ?? 0,
     details: r.details,
   };
-  return { item, brand: undefined, category: undefined, contributor: undefined, viewerEngagement: undefined };
+  return {
+    item,
+    brand: undefined,
+    category: undefined,
+    contributor: undefined,
+    viewerEngagement: undefined,
+    reviewInsights: null,
+  };
 }

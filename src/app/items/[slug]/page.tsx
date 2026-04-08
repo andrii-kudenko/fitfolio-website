@@ -11,6 +11,10 @@ import {
   HeartCrackIcon,
   HeartPlus,
   BookmarkIcon,
+  Sparkles,
+  ThumbsUp,
+  ThumbsDown,
+  Tags,
 } from 'lucide-react';
 import { itemsApi } from '@/features/items/api/items.api';
 import {
@@ -624,6 +628,62 @@ export default function ItemPage() {
               Comments
             </button>
           </div>
+
+          {activeTab === 'reviews' && item?.reviewInsights && (
+            <section
+              className="mb-8 rounded-2xl border border-white/10 bg-white/[0.04] p-6 backdrop-blur-sm"
+              aria-labelledby="review-insights-heading"
+            >
+              <div className="mb-4 flex items-center gap-2">
+                <Sparkles className="size-5 shrink-0 text-amber-300" aria-hidden />
+                <h2 id="review-insights-heading" className="text-lg font-semibold text-white">
+                  What reviewers say
+                </h2>
+                <span className="ml-auto text-xs tabular-nums text-white/40">
+                  From {item.reviewInsights.sourceReviewCount} reviews
+                  {item.reviewInsights.confidence != null
+                    ? ` · ${Math.round(item.reviewInsights.confidence * 100)}% confidence`
+                    : ''}
+                </span>
+              </div>
+              <p className="mb-6 text-base leading-relaxed text-white/85">{item.reviewInsights.summary}</p>
+              <div className="grid gap-6 sm:grid-cols-3">
+                <div>
+                  <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-emerald-300/90">
+                    <ThumbsUp className="size-4" aria-hidden />
+                    Pros
+                  </div>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-white/75">
+                    {item.reviewInsights.pros.map((p) => (
+                      <li key={p}>{p}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-rose-300/90">
+                    <ThumbsDown className="size-4" aria-hidden />
+                    Cons
+                  </div>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-white/75">
+                    {item.reviewInsights.cons.map((c) => (
+                      <li key={c}>{c}</li>
+                    ))}
+                  </ul>
+                </div>
+                <div>
+                  <div className="mb-2 flex items-center gap-1.5 text-sm font-medium text-sky-300/90">
+                    <Tags className="size-4" aria-hidden />
+                    Themes
+                  </div>
+                  <ul className="list-inside list-disc space-y-1 text-sm text-white/75">
+                    {item.reviewInsights.themes.map((t) => (
+                      <li key={t}>{t}</li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </section>
+          )}
 
           {activeTab === 'reviews' && (
             <ItemReviewsTab
