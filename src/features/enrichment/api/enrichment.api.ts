@@ -4,18 +4,18 @@ const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.fitfolio.app";
 
 export const enrichmentApi = {
   /**
-   * Get metadata tags for an item from OpenAI (image + name + category + brand).
-   * Call this before creating the item, then pass the metadata to itemsApi.create.
+   * Get metadata tags + generated itemName from OpenAI (image + short user prompt + category + brand).
+   * Call this before creating the item, then pass itemName as name and metadata to itemsApi.create.
    */
   getMetadata: async (params: {
     image: File;
-    name: string;
+    itemPrompt: string;
     category: string;
     brand: string;
   }): Promise<EnrichmentResponse> => {
     const formData = new FormData();
     formData.append("image", params.image);
-    formData.append("name", params.name);
+    formData.append("itemPrompt", params.itemPrompt);
     formData.append("category", params.category);
     formData.append("brand", params.brand);
 

@@ -1,5 +1,7 @@
 const MAX_DIMENSION = 4096;
 const JPEG_QUALITY = 0.92;
+/** Matte for `contain` (letterboxing) and transparent edges when resizing — fits dark UI. */
+const NORMALIZE_BACKGROUND = "#000000";
 
 function scaleToFit(width: number, height: number, maxSide: number): { width: number; height: number } {
   if (width <= maxSide && height <= maxSide) {
@@ -20,7 +22,7 @@ function drawBitmapToSquare(
 ): void {
   const w = bitmap.width;
   const h = bitmap.height;
-  ctx.fillStyle = "#ffffff";
+  ctx.fillStyle = NORMALIZE_BACKGROUND;
   ctx.fillRect(0, 0, side, side);
 
   if (fit === "contain") {
@@ -89,7 +91,7 @@ export async function fileToNormalizedJpeg(
       height = scaled.height;
       canvas.width = width;
       canvas.height = height;
-      ctx.fillStyle = "#ffffff";
+      ctx.fillStyle = NORMALIZE_BACKGROUND;
       ctx.fillRect(0, 0, width, height);
       ctx.drawImage(bitmap, 0, 0, width, height);
     }
