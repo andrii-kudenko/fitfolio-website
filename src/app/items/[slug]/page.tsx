@@ -219,7 +219,7 @@ export default function ItemPage() {
                 <div className={`pointer-events-none absolute inset-0 z-10 ${overlayLeave}`}>
                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                     <div className="relative">
-                      <div className="relative aspect-square bg-ff-black rounded-lg overflow-hidden">
+                      <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
                         <div className="w-full h-full bg-slate-800 animate-pulse" />
                       </div>
                     </div>
@@ -423,7 +423,7 @@ export default function ItemPage() {
               className={`px-6 py-2 rounded-lg font-medium transition ${
                 activeTab === 'comments'
                   ? 'bg-ff-blue text-white'
-                  : 'bg-ff-black text-white hover:bg-white/10'
+                  : 'bg-black text-white hover:bg-white/10'
               }`}
             >
               Comments
@@ -605,7 +605,7 @@ export default function ItemPage() {
 //                 <div className={`pointer-events-none absolute inset-0 z-10 ${overlayLeave}`}>
 //                   <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
 //                     <div className="relative">
-//                       <div className="relative aspect-square bg-ff-black rounded-lg overflow-hidden">
+//                       <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
 //                         <div className="w-full h-full bg-slate-800 animate-pulse" />
 //                       </div>
 //                     </div>
@@ -655,7 +655,7 @@ export default function ItemPage() {
 //               <div className={`grid grid-cols-1 lg:grid-cols-2 gap-8 ${isLoaded ? contentEnter : ''}`}>
 //                 {/* Product Image */}
 //                 <div className="relative">
-//                   <div className="relative aspect-square bg-ff-black rounded-lg overflow-hidden">
+//                   <div className="relative aspect-square bg-black rounded-lg overflow-hidden">
 //                     {loading ? (
 //                       <div className="w-full h-full bg-slate-800 animate-pulse" />
 //                     ) : item?.item.imageUrl ? (
@@ -861,7 +861,7 @@ export default function ItemPage() {
 //                   Array.from({ length: 5 }).map((_, idx) => (
 //                     <div
 //                       key={idx}
-//                       className="flex-shrink-0 w-[260px] min-h-[260px] bg-ff-black rounded-lg overflow-hidden flex flex-col"
+//                       className="flex-shrink-0 w-[260px] min-h-[260px] bg-black rounded-lg overflow-hidden flex flex-col"
 //                     >
 //                       <div className="w-full h-[160px] bg-slate-800 animate-pulse" />
 //                       <div className="flex-1 flex flex-col justify-between py-3 px-3">
@@ -888,7 +888,7 @@ export default function ItemPage() {
 //                       <Link
 //                         key={idx}
 //                         href="/items/related-item"
-//                         className="flex-shrink-0 w-[260px] min-h-[260px] bg-ff-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity"
+//                         className="flex-shrink-0 w-[260px] min-h-[260px] bg-black rounded-lg overflow-hidden flex flex-col hover:opacity-90 transition-opacity"
 //                       >
 //                         <div className="relative w-full h-[160px] flex-shrink-0">
 //                           {relatedItem.image ? (
@@ -964,7 +964,7 @@ export default function ItemPage() {
 //               className={`px-6 py-2 rounded-lg font-medium transition ${
 //                 activeTab === 'comments'
 //                   ? 'bg-ff-blue text-white'
-//                   : 'bg-ff-black text-white hover:bg-white/10'
+//                   : 'bg-black text-white hover:bg-white/10'
 //               }`}
 //             >
 //               Comments

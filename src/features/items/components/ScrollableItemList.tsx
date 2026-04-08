@@ -61,7 +61,7 @@ export default function ScrollableItemList({ items, title }: ScrollableItemListP
           <button
             onClick={() => scroll('left')}
               className="absolute left-[20px] top-1/2 -translate-y-1/2 z-10 transform -translate-x-1/2 rounded-full
-              bg-black/90 hover:bg-ff-black/80 p-2 transition-opacity"
+              bg-black/90 hover:bg-black/80 p-2 transition-opacity"
             aria-label="Scroll left"
           >
             <ChevronLeft className="w-[20px] h-[40px] text-white" />
@@ -85,7 +85,7 @@ export default function ScrollableItemList({ items, title }: ScrollableItemListP
             onClick={() => scroll('right')}
             className="absolute right-[20px] top-1/2 -translate-y-1/2 z-10
             transform translate-x-1/2 rounded-full
-            bg-black/90 hover:bg-ff-black/80 p-2 transition-opacity"
+            bg-black/90 hover:bg-black/80 p-2 transition-opacity"
             aria-label="Scroll right"
           >
             <ChevronRight className="w-[20px] h-[40px] text-white" />

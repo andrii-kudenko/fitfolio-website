@@ -212,7 +212,7 @@ export default function CreateCollectionPage() {
   };
 
   return (
-    <main className="min-h-screen bg-ff-black text-white overflow-x-hidden">
+    <main className="min-h-screen bg-black text-white overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Header with Cancel and Save */}
         <div className="mb-8 flex items-center justify-between">

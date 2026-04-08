@@ -79,8 +79,8 @@ export function ItemReviewsTab({
                 key={review.id}
                 className="border border-white/10 rounded-lg p-6"
               >
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-[8rem_1fr] sm:gap-8">
-                  <div className="flex flex-row  gap-2 sm:flex-col max-sm:items-center">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-[1fr_5fr] sm:gap-8">
+                  <div className="flex flex-row items-center  gap-2 sm:flex-col max-sm:items-center">
                     <div className="w-10 h-10 shrink-0 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
                       {userProfile?.avatarUrl ? (
                         <Image
@@ -97,7 +97,7 @@ export function ItemReviewsTab({
                       )}
                     </div>
                     <div className="min-w-0 flex-1 sm:flex-none ">
-                      <p className="text-white/80 text-sm font-medium break-words">
+                      <p className="text-white/80 sm:text-center text-sm font-medium break-words">
                         @{username}
                       </p>
                       {fitInfo.length > 0 && (
@@ -112,11 +112,11 @@ export function ItemReviewsTab({
 
                   <div className="min-w-0">
                     <div className="flex items-center gap-4 mb-3">
-                      <div className="text-xl font-semibold shrink-0 flex items-center gap-1 text-yellow-300">
+                      <div className="text-2xl font-semibold shrink-0 flex items-center gap-1 text-yellow-300">
                         {review.rating != null ? (
                           <>
                             <span>{review.rating}</span>
-                            <Star className="size-6 shrink-0 fill-yellow-300 text-yellow-300" aria-hidden />
+                            <Star className="size-5.5 shrink-0 fill-yellow-300 text-yellow-300" aria-hidden />
                           </>
                         ) : (
                           <span className="text-white/50 text-base font-normal">N/A</span>

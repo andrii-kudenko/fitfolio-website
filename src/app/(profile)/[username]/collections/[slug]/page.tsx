@@ -15,6 +15,10 @@ import type {
 import type { ItemResponse } from '@/features/items/types/items.types';
 import type { UserProfileResponse } from '@/features/users/types/users.types';
 import CommentsSection from '@/features/comments/CommentsSection';
+import {
+  itemGridThumbImageSizes,
+  itemGridThumbWidthClasses,
+} from '@/shared/constants/itemGridThumb';
 
 interface CollectionItemWithDetails extends CollectionItemResponse {
   item?: ItemResponse;
@@ -106,7 +110,7 @@ export default function CollectionPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-ff-black text-white">
+      <main className="min-h-screen bg-black text-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-8">
           <div className="text-slate-400">Loading collection...</div>
         </div>
@@ -116,7 +120,7 @@ export default function CollectionPage() {
 
   if (error || !collection) {
     return (
-      <main className="min-h-screen bg-ff-black text-white">
+      <main className="min-h-screen bg-black text-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-8">
           <div className="text-red-400">{error || 'Collection not found'}</div>
           <Link
@@ -131,25 +135,25 @@ export default function CollectionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ff-black text-white">
+    <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Back Button */}
-        <Link
+        {/* <Link
           href={`/${username}`}
           className="mb-6 inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
           Back to profile
-        </Link>
+        </Link> */}
 
         {/* Banner Section */}
         <div className="relative mb-6 overflow-hidden rounded-3xl border border-slate-800">
           <div className="relative h-64 w-full md:h-80">
             <Image
-              src={collection.coverImageUrl || '/collection-bg.jpg'}
+              src={collection.coverImageUrl || '/tier-list-bg.jpg'}
               alt={collection.title}
               fill
-              className="object-cover opacity-90"
+              className="object-cover opacity-60"
               sizes="100vw"
               priority
             />
@@ -169,7 +173,9 @@ export default function CollectionPage() {
                   />
                 </div>
                 <div className="text-white">
-                  <p className="text-sm font-medium">Collection by {userProfile.username}</p>
+                  <p className="text-sm font-medium">
+                    Collection by <Link href={`/${userProfile.username}`} className="text-ff-cyan hover:underline">@{userProfile.username}</Link>
+                  </p>
                   <p className="text-xs text-white/70">{formatTimeAgo(collection.createdAt)}</p>
                 </div>
               </div>
@@ -178,7 +184,7 @@ export default function CollectionPage() {
         </div>
 
         {/* Filter and Sort Bar */}
-        <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm">
+        {/* <div className="mb-6 flex flex-wrap items-center gap-4 rounded-lg border border-slate-800 bg-slate-950/80 px-4 py-3 text-sm">
           <div className="flex items-center gap-2">
             <span className="text-slate-400">FILTER BY</span>
             <button className="flex items-center gap-1 rounded-lg border border-slate-700 bg-slate-900 px-3 py-1 text-white hover:bg-slate-800">
@@ -208,7 +214,7 @@ export default function CollectionPage() {
               REVERSE
             </button>
           </div>
-        </div>
+        </div> */}
 
         {/* Collection Details Section */}
         <div className="mb-8 flex items-start justify-between">
@@ -220,16 +226,19 @@ export default function CollectionPage() {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
             <Link
               href={`/${username}/collections/${slug}/edit`}
-              className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-ff-cyan/35 bg-ff-cyan/10 px-4 py-2 text-sm font-semibold tracking-wide text-ff-cyan transition-colors hover:border-ff-cyan/80 hover:bg-ff-cyan/15"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="h-4 w-4" strokeWidth={2} />
               Edit
             </Link>
-            <button className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors">
-              <Trash2 className="w-4 h-4" />
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg border border-red-500/35 bg-red-500/10 px-4 py-2 text-sm font-semibold tracking-wide text-red-300 transition-colors hover:border-red-400/60 hover:bg-red-500/15 hover:text-red-200"
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={2} />
               Delete
             </button>
           </div>
@@ -237,56 +246,34 @@ export default function CollectionPage() {
 
         {/* Items Grid */}
         {items.length > 0 ? (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="flex w-[80%] flex-wrap justify-start gap-2 sm:gap-3">
             {items.map((collectionItem, index) => (
-              <div key={collectionItem.id} className="group relative">
+              <div
+                key={collectionItem.id}
+                className={`group relative ${itemGridThumbWidthClasses}`}
+              >
                 {collectionItem.item ? (
                   <Link href={`/items/${collectionItem.item.slug}`} className="block">
-                    <div className="relative w-full bg-white rounded-lg overflow-hidden">
+                    <div className="relative w-full  rounded-lg overflow-hidden 
+                     border-2 border-transparent hover:border-2 hover:border-ff-cyan transition-all duration-300 ease-in-out">
                       {/* Product Image */}
                       <div className="relative w-full aspect-square overflow-hidden">
                         <Image
                           src={collectionItem.item.imageUrl || '/tnf-jacket.jpg'}
                           alt={collectionItem.item.name}
                           fill
-                          className="object-cover transition-transform duration-700 ease-in-out group-hover:scale-110"
-                          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+                          className="object-cover transition-transform duration-700 ease-in-out opacity-90 "
+                          sizes={itemGridThumbImageSizes}
                         />
                       </div>
 
                       {/* Rank Number - Below Image (Only show if collection is ranked) */}
                       {collection.isRanked && (
-                        <div className="flex items-center justify-center bg-white py-3">
-                          <span className="text-3xl font-bold text-black">{collectionItem.rank}</span>
+                        <div className="flex items-center justify-center bg-white py-1.5">
+                          <span className="text-base font-bold text-black sm:text-lg">{collectionItem.rank}</span>
                         </div>
                       )}
-
-                      {/* Hover Tooltip */}
-                      <div className="absolute inset-0 bg-black/85 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center p-6 z-10">
-                        <h3 className="text-white text-xl font-semibold mb-4 text-center">
-                          {collectionItem.item.name}
-                        </h3>
-                        <div className="flex items-center gap-8">
-                          <div className="flex flex-col items-center gap-1">
-                            <Star className="w-6 h-6 text-ff-cyan" strokeWidth={1.5} />
-                            <span className="text-white text-base font-medium">
-                              {collectionItem.item.rating ? collectionItem.item.rating.toFixed(1) : '0'}
-                            </span>
-                          </div>
-                          <div className="flex flex-col items-center gap-1">
-                            <Eye className="w-6 h-6 text-ff-cyan" strokeWidth={1.5} />
-                            <span className="text-white text-base font-medium">
-                              {formatCount(collectionItem.item.viewCount)}
-                            </span>
-                          </div>
-                          <div className="flex flex-col items-center gap-1">
-                            <MessageCircle className="w-6 h-6 text-ff-cyan" strokeWidth={1.5} />
-                            <span className="text-white text-base font-medium">
-                              {formatCount(collectionItem.item.commentCount)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
+                      
                     </div>
                   </Link>
                 ) : (
@@ -303,7 +290,7 @@ export default function CollectionPage() {
           </div>
         )}
 
-        <section className="mt-12 border-t border-slate-800 pt-10">
+        <section className="mt-12 pt-10">
           <h2 className="mb-6 text-xl font-semibold text-white">Comments</h2>
           <CommentsSection subjectType="COLLECTION" subjectId={collection.id} />
         </section>

@@ -527,7 +527,7 @@ export default function EditTierListPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-ff-black text-white">
+      <main className="min-h-screen bg-black text-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-8">
           <div className="text-slate-400">Loading tier list...</div>
         </div>
@@ -536,7 +536,7 @@ export default function EditTierListPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ff-black text-white overflow-x-hidden">
+    <main className="min-h-screen bg-black text-white overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Header with Cancel, View, and Save */}
         <div className="mb-8 flex items-center justify-between">
@@ -566,7 +566,7 @@ export default function EditTierListPage() {
         <div className="space-y-8">
           {/* Main Form */}
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-8">
-            <h2 className="mb-6 text-xl font-semibold uppercase tracking-wide">EDIT TIER-LIST</h2>
+            {/* <h2 className="mb-6 text-xl font-semibold uppercase tracking-wide">EDIT TIER-LIST</h2> */}
 
             <div className="grid gap-8 md:grid-cols-2">
               {/* Left Column - Tier List Details */}
@@ -587,7 +587,7 @@ export default function EditTierListPage() {
                 </div>
 
                 {/* Tags Field */}
-                <div>
+                {/* <div>
                   <label htmlFor="tags" className="mb-2 block text-sm font-medium text-slate-200">
                     Tags
                   </label>
@@ -597,7 +597,7 @@ export default function EditTierListPage() {
                     placeholder="eg. top 10"
                     className="w-full rounded-lg border border-white bg-black px-4 py-2 text-white placeholder:text-slate-500 focus:border-ff-cyan focus:outline-none"
                   />
-                </div>
+                </div> */}
 
                 {/* Who can view Field */}
                 <div>
@@ -640,42 +640,9 @@ export default function EditTierListPage() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
           >
-            <div className="space-y-2">
-              {tiers.map((tier) => (
-                <TierRow
-                  key={tier.id}
-                  tier={tier}
-                  items={tier.items}
-                  onRemoveItem={(itemId) => handleRemoveFromTier(tier.id, itemId)}
-                />
-              ))}
-            </div>
+            
 
-            {/* Buffer Section */}
-            <div className="mt-8">
-              <h3 className="mb-4 text-lg font-semibold text-slate-200">Buffer</h3>
-              <BufferZone
-                items={bufferItems}
-                onRemoveItem={handleRemoveFromBuffer}
-              />
-            </div>
-
-            <DragOverlay>
-              {activeItem ? (
-                <div className="relative w-16 h-16 rounded-md overflow-hidden border-2 border-ff-cyan bg-slate-900">
-                  <Image
-                    src={activeItem.imageUrl || '/tnf-jacket.jpg'}
-                    alt={activeItem.name}
-                    fill
-                    className="object-cover"
-                    sizes="64px"
-                  />
-                </div>
-              ) : null}
-            </DragOverlay>
-          </DndContext>
-
-          {/* Add Item Section with Search */}
+            {/* Add Item Section with Search */}
           <div className="relative" ref={searchRef}>
             <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
               <button
@@ -747,6 +714,43 @@ export default function EditTierListPage() {
               </div>
             </div>
           </div>
+
+            {/* Buffer Section */}
+            <div className="mt-8">
+              <h3 className="mb-4 text-lg font-semibold text-slate-200">Buffer</h3>
+              <BufferZone
+                items={bufferItems}
+                onRemoveItem={handleRemoveFromBuffer}
+              />
+            </div>
+
+            <div className="space-y-2">
+              {tiers.map((tier) => (
+                <TierRow
+                  key={tier.id}
+                  tier={tier}
+                  items={tier.items}
+                  onRemoveItem={(itemId) => handleRemoveFromTier(tier.id, itemId)}
+                />
+              ))}
+            </div>
+
+            <DragOverlay>
+              {activeItem ? (
+                <div className="relative w-16 h-16 rounded-md overflow-hidden border-2 border-ff-cyan bg-slate-900">
+                  <Image
+                    src={activeItem.imageUrl || '/tnf-jacket.jpg'}
+                    alt={activeItem.name}
+                    fill
+                    className="object-cover"
+                    sizes="64px"
+                  />
+                </div>
+              ) : null}
+            </DragOverlay>
+          </DndContext>
+
+          
         </div>
       </div>
     </main>

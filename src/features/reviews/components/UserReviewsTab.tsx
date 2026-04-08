@@ -132,22 +132,22 @@ export function UserReviewsTab({ userId, username, avatarUrl }: UserReviewsTabPr
                   {item ? (
                     <Link
                       href={`/items/${item.slug}`}
-                      className="flex min-w-0 flex-1 items-center gap-3 transition hover:opacity-90"
+                      className="flex min-w-0 flex-1 items-center gap-5 transition hover:opacity-90"
                     >
-                      <div className="h-14 w-14 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/5">
+                      <div className="h-20 w-20 shrink-0 overflow-hidden rounded-lg border border-white/10 bg-white/5">
                         {item.imageUrl ? (
                           <Image
                             src={item.imageUrl}
                             alt={item.name}
-                            width={56}
-                            height={56}
+                            width={80}
+                            height={80}
                             className="h-full w-full object-cover"
                           />
                         ) : (
                           <div className="h-full w-full bg-white/5" />
                         )}
                       </div>
-                      <span className="min-w-0 truncate text-sm font-medium text-white/80">
+                      <span className="min-w-0 truncate text-base font-medium text-white/80">
                         {item.name}
                       </span>
                     </Link>
@@ -159,27 +159,29 @@ export function UserReviewsTab({ userId, username, avatarUrl }: UserReviewsTabPr
                   )}
                 </div>
 
-                <div className="grid grid-cols-1 gap-6 sm:grid-cols-[8rem_1fr] sm:gap-8">
-                  <div className="flex flex-row gap-2 sm:flex-col max-sm:items-center">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10">
+                <div className="grid grid-cols-1 gap-6 sm:grid-cols-[1fr_5fr] sm:gap-8">
+                  <div className="flex flex-row items-center  gap-2 sm:flex-col max-sm:items-center">
+                    <div className="w-10 h-10 shrink-0 rounded-full bg-white/10 flex items-center justify-center overflow-hidden">
                       {avatarUrl ? (
                         <Image
                           src={avatarUrl}
                           alt={username}
                           width={40}
                           height={40}
-                          className="h-full w-full object-cover"
+                          className="w-full h-full object-cover"
                         />
                       ) : (
-                        <span className="text-sm font-medium text-white/60">
+                        <span className="text-white/60 text-sm font-medium">
                           {username.charAt(0).toUpperCase()}
                         </span>
                       )}
                     </div>
-                    <div className="min-w-0 flex-1 sm:flex-none">
-                      <p className="break-words text-sm font-medium text-white/80">@{username}</p>
+                    <div className="min-w-0 flex-1 sm:flex-none ">
+                      <p className="text-white/80 sm:text-center text-sm font-medium break-words">
+                        @{username}
+                      </p>
                       {fitInfo.length > 0 && (
-                        <div className="mt-2 flex flex-wrap items-center gap-2 text-sm text-white/60">
+                        <div className="mt-2 flex items-center gap-2 text-sm text-white/60">
                           {fitInfo.map((info, idx) => (
                             <span key={idx}>{info}</span>
                           ))}
@@ -189,39 +191,39 @@ export function UserReviewsTab({ userId, username, avatarUrl }: UserReviewsTabPr
                   </div>
 
                   <div className="min-w-0">
-                    <div className="mb-3 flex items-center gap-4">
-                      <div className="flex shrink-0 items-center gap-1 text-xl font-semibold text-yellow-300">
+                    <div className="flex items-center gap-4 mb-3">
+                      <div className="text-2xl font-semibold shrink-0 flex items-center gap-1 text-yellow-300">
                         {review.rating != null ? (
                           <>
                             <span>{review.rating}</span>
-                            <Star className="size-6 shrink-0 fill-yellow-300 text-yellow-300" aria-hidden />
+                            <Star className="size-5.5 shrink-0 fill-yellow-300 text-yellow-300" aria-hidden />
                           </>
                         ) : (
-                          <span className="text-base font-normal text-white/50">N/A</span>
+                          <span className="text-white/50 text-base font-normal">N/A</span>
                         )}
                       </div>
                       {review.title && (
-                        <h3 className="min-w-0 flex-1 text-xl font-semibold">{review.title}</h3>
+                        <h3 className="text-xl font-semibold flex-1 min-w-0">{review.title}</h3>
                       )}
                     </div>
 
                     {review.text && (
-                      <p className="mb-4 leading-relaxed text-white/80">{review.text}</p>
+                      <p className="text-white/80 mb-4 leading-relaxed">{review.text}</p>
                     )}
 
                     <div className="flex items-center gap-4">
                       <button
                         type="button"
-                        className="flex items-center gap-2 text-white/60 transition hover:text-white"
+                        className="flex items-center gap-2 text-white/60 hover:text-white transition"
                       >
-                        <ThumbsUp className="h-4 w-4" />
-                        <span className="text-sm">{review.likeCount ?? 0}</span>
+                        <ThumbsUp className="w-4 h-4" />
+                        <span className="text-sm">{review.likeCount || 0}</span>
                       </button>
                       <button
                         type="button"
-                        className="text-white/60 transition hover:text-white"
+                        className="text-white/60 hover:text-white transition"
                       >
-                        <MoreHorizontal className="h-4 w-4" />
+                        <MoreHorizontal className="w-4 h-4" />
                       </button>
                     </div>
                   </div>

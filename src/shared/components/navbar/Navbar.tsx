@@ -850,7 +850,7 @@ export default function FitFolioNavbarDesktop({
                 ref={menuRef}
                 role="menu"
                 aria-label="Profile menu"
-                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border-b-2 border-ff-cyan bg-ff-black/80 shadow-xl"
+                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border-b-2 border-ff-cyan bg-black/80 shadow-xl z-50"
               >
                 <div className="relative p-1">
                   {loggedInUser ? (

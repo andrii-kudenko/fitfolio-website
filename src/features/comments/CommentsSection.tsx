@@ -77,18 +77,18 @@ function CommentThread({
   return (
     <div className="space-y-3">
       <div className="flex gap-3">
-        <div className="w-5 flex justify-center pt-3">
+        <div className="flex w-5 justify-center pt-3">
           {hasChildren ? (
             <button
               type="button"
               onClick={() => onToggleCollapse(comment.id)}
-              className="h-5 w-5 rounded-full border border-white/25 text-xs text-white/70 hover:text-white hover:border-white/50 transition"
+              className="flex h-5 w-5 items-center justify-center rounded-full border border-slate-600 text-xs text-slate-400 transition hover:border-ff-cyan/50 hover:text-ff-cyan"
               title={isCollapsed ? "Expand replies" : "Collapse replies"}
             >
               {isCollapsed ? "+" : "−"}
             </button>
           ) : (
-            <div className="h-5 w-5 rounded-full border border-white/10" />
+            <div className="h-5 w-5 rounded-full border border-slate-800" />
           )}
         </div>
 
@@ -104,7 +104,7 @@ function CommentThread({
           {replyToId === comment.id && (
             <div
               className={`mt-3 ${
-                visualDepth > 0 ? "ml-4 border-l border-white/10 pl-4" : ""
+                visualDepth > 0 ? "ml-4 border-l border-slate-800 pl-4" : ""
               }`}
             >
               <CommentForm
@@ -118,7 +118,7 @@ function CommentThread({
 
           {!isCollapsed && hasChildren && (
             <div
-              className={`mt-3 space-y-4 border-l border-white/10 pl-4 ${
+              className={`mt-3 space-y-4 border-l border-slate-800 pl-4 ${
                 visualDepth >= 4 ? "ml-4" : "ml-6"
               }`}
             >
@@ -251,9 +251,9 @@ export default function CommentsSection({
       <CommentForm onSubmit={handleCreate} placeholder="Write a comment..." />
 
       {loading ? (
-        <div className="text-white/60">Loading comments...</div>
+        <div className="text-slate-400">Loading comments…</div>
       ) : commentTree.length === 0 ? (
-        <div className="text-white/60">No comments yet.</div>
+        <div className="text-slate-400">No comments yet.</div>
       ) : (
         <div className="space-y-6">
           {commentTree.map((comment) => (

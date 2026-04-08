@@ -12,6 +12,10 @@ import type { TierListDetailResponse } from '@/features/tierlists/types/tierlist
 import type { ItemResponse } from '@/features/items/types/items.types';
 import type { UserProfileResponse } from '@/features/users/types/users.types';
 import CommentsSection from '@/features/comments/CommentsSection';
+import {
+  itemGridThumbImageSizes,
+  itemGridThumbWidthClasses,
+} from '@/shared/constants/itemGridThumb';
 
 interface TierItemWithDetails {
   id: string;
@@ -123,7 +127,7 @@ export default function TierListPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-ff-black text-white">
+      <main className="min-h-screen bg-black text-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-8">
           <div className="text-slate-400">Loading tier list...</div>
         </div>
@@ -133,7 +137,7 @@ export default function TierListPage() {
 
   if (error || !tierList) {
     return (
-      <main className="min-h-screen bg-ff-black text-white">
+      <main className="min-h-screen bg-black text-white">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-center px-4 py-8">
           <div className="text-red-400">{error || 'Tier list not found'}</div>
           <Link
@@ -148,7 +152,7 @@ export default function TierListPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ff-black text-white">
+    <main className="min-h-screen bg-black text-white">
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Banner Section */}
         <div className="relative mb-6 overflow-hidden rounded-3xl border border-slate-800">
@@ -157,7 +161,7 @@ export default function TierListPage() {
               src={tierList.coverImageUrl || '/tier-list-bg.jpg'}
               alt={tierList.title}
               fill
-              className="object-cover opacity-90"
+              className="object-cover opacity-60"
               sizes="100vw"
               priority
             />
@@ -200,23 +204,26 @@ export default function TierListPage() {
           </div>
           
           {/* Action Buttons */}
-          <div className="flex gap-3">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-2 sm:gap-3">
             <Link
               href={`/${username}/tierlists/${slug}/edit`}
-              className="flex items-center gap-2 rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white hover:bg-slate-600 transition-colors"
+              className="flex items-center gap-2 rounded-lg border border-ff-cyan/35 bg-ff-cyan/10 px-4 py-2 text-sm font-semibold tracking-wide text-ff-cyan transition-colors hover:border-ff-cyan/80 hover:bg-ff-cyan/15"
             >
-              <Edit className="w-4 h-4" />
+              <Edit className="h-4 w-4" strokeWidth={2} />
               Edit
             </Link>
-            <button className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition-colors">
-              <Trash2 className="w-4 h-4" />
+            <button
+              type="button"
+              className="flex items-center gap-2 rounded-lg border border-red-500/35 bg-red-500/10 px-4 py-2 text-sm font-semibold tracking-wide text-red-300 transition-colors hover:border-red-400/60 hover:bg-red-500/15 hover:text-red-200"
+            >
+              <Trash2 className="h-4 w-4" strokeWidth={2} />
               Delete
             </button>
           </div>
         </div>
 
         {/* Tier List Grid */}
-        <div className="space-y-2">
+        <div className="space-y-1">
           {tiersWithItemDetails.map((tier) => {
             const tierLabel = tier.label || tier.name.charAt(0).toUpperCase();
             const tierColor = tier.color || '#6B7280'; // Default gray
@@ -224,36 +231,42 @@ export default function TierListPage() {
             return (
               <div
                 key={tier.id}
-                className="flex items-center gap-3 rounded-lg border border-slate-800 bg-slate-900/50 p-3 min-h-[100px]"
+                className="flex items-center gap-3 rounded-lg border border-white/10 px-3"
               >
                 {/* Tier Label */}
                 <div
-                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full text-sm font-bold text-white"
+                  className="flex h-20 w-6 shrink-0 items-center justify-center rounded-xl text-sm font-bold text-white"
                   style={{ backgroundColor: tierColor }}
                 >
                   {tierLabel}
                 </div>
 
-                {/* Items */}
-                <div className="flex flex-1 gap-2 flex-wrap">
+                {/* Items — same card shell as collection detail */}
+                <div className="flex flex-1 flex-wrap gap-1">
                   {tier.items.length > 0 ? (
                     tier.items.map((tierItem) => (
                       <div
                         key={tierItem.id}
-                        className="relative h-20 w-20 shrink-0 overflow-hidden rounded-md border border-white/10 bg-slate-800"
+                        className={`group relative ${itemGridThumbWidthClasses}`}
                       >
                         {tierItem.item?.imageUrl ? (
-                          <Link href={`/items/${tierItem.item.slug}`}>
-                            <Image
-                              src={tierItem.item.imageUrl}
-                              alt={tierItem.item.name || ''}
-                              fill
-                              className="object-cover hover:opacity-80 transition-opacity"
-                              sizes="80px"
-                            />
+                          <Link href={`/items/${tierItem.item.slug}`} className="block">
+                            <div className="relative w-full overflow-hidden rounded-lg border-2 border-transparent transition-all duration-300 ease-in-out hover:border-2 hover:border-ff-cyan">
+                              <div className="relative aspect-square w-full overflow-hidden">
+                                <Image
+                                  src={tierItem.item.imageUrl}
+                                  alt={tierItem.item.name || ''}
+                                  fill
+                                  className="object-cover opacity-90 transition-transform duration-700 ease-in-out"
+                                  sizes={itemGridThumbImageSizes}
+                                />
+                              </div>
+                            </div>
                           </Link>
                         ) : (
-                          <div className="h-full w-full bg-slate-700" />
+                          <div className="relative w-full overflow-hidden rounded-lg border-2 border-transparent">
+                            <div className="relative aspect-square w-full bg-slate-700" />
+                          </div>
                         )}
                       </div>
                     ))
@@ -268,7 +281,7 @@ export default function TierListPage() {
           })}
         </div>
 
-        <section className="mt-12 border-t border-slate-800 pt-10">
+        <section className="mt-12 pt-10">
           <h2 className="mb-6 text-xl font-semibold text-white">Comments</h2>
           <CommentsSection subjectType="TIER_LIST" subjectId={tierList.id} />
         </section>
