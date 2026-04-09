@@ -52,10 +52,17 @@ export default function FitFolioNavbarDesktop({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isItemsPage = pathname === "/items";
+  const isListsPage = pathname === "/lists";
+  const isMembersPage = pathname === "/members";
+  const inlineSearchPage = isItemsPage || isListsPage || isMembersPage;
   const itemsPageQuery = isItemsPage ? (searchParams.get("q") ?? "") : "";
+  const listsPageQuery = isListsPage ? (searchParams.get("q") ?? "") : "";
+  const membersPageQuery = isMembersPage ? (searchParams.get("q") ?? "") : "";
   const hasHydratedItemsInputRef = useRef(false);
+  const hasHydratedListsInputRef = useRef(false);
+  const hasHydratedMembersInputRef = useRef(false);
 
-  // Hydrate input and search mode from URL when on /items
+  // Hydrate inline search inputs from URL on /items and /lists
   useEffect(() => {
     if (isItemsPage) {
       if (!hasHydratedItemsInputRef.current) {
@@ -67,15 +74,47 @@ export default function FitFolioNavbarDesktop({
     } else {
       hasHydratedItemsInputRef.current = false;
     }
-  }, [isItemsPage, itemsPageQuery, searchParams]);
+    if (isListsPage) {
+      if (!hasHydratedListsInputRef.current) {
+        hasHydratedListsInputRef.current = true;
+        setListsPageInput(listsPageQuery);
+      }
+    } else {
+      hasHydratedListsInputRef.current = false;
+    }
+    if (isMembersPage) {
+      if (!hasHydratedMembersInputRef.current) {
+        hasHydratedMembersInputRef.current = true;
+        setMembersPageInput(membersPageQuery);
+      }
+    } else {
+      hasHydratedMembersInputRef.current = false;
+    }
+  }, [isItemsPage, isListsPage, isMembersPage, itemsPageQuery, listsPageQuery, membersPageQuery, searchParams]);
 
   // Clear timers on unmount
   useEffect(() => {
     return () => {
       if (itemsPageUrlUpdateTimer.current) clearTimeout(itemsPageUrlUpdateTimer.current);
+      if (listsPageUrlUpdateTimer.current) clearTimeout(listsPageUrlUpdateTimer.current);
+      if (membersPageUrlUpdateTimer.current) clearTimeout(membersPageUrlUpdateTimer.current);
       if (quickSearchDebounceTimer.current) clearTimeout(quickSearchDebounceTimer.current);
     };
   }, []);
+
+  const NAVBAR_SCROLL_THRESHOLD_PX = 8;
+  const [navbarScrolled, setNavbarScrolled] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onScroll = () => {
+      setNavbarScrolled(window.scrollY > NAVBAR_SCROLL_THRESHOLD_PX);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
   const [open, setOpen] = useState(false);
   // Internal state for search if not controlled by parent
   const [internalSearching, setInternalSearching] = useState(false);
@@ -89,11 +128,15 @@ export default function FitFolioNavbarDesktop({
   const searchIconBtnRef = useRef<HTMLButtonElement | null>(null);
   const [searchInput, setSearchInput] = useState("");
   const [itemsPageInput, setItemsPageInput] = useState("");
+  const [listsPageInput, setListsPageInput] = useState("");
+  const [membersPageInput, setMembersPageInput] = useState("");
   const [searchResults, setSearchResults] = useState<ItemSearchResult[]>([]);
   const [searchMode, setSearchMode] = useState<"filters" | "smart">("filters");
   const [hasSearched, setHasSearched] = useState(false);
   const [isSearchingItems, setIsSearchingItems] = useState(false);
   const itemsPageUrlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const listsPageUrlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const membersPageUrlUpdateTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const quickSearchDebounceTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const searchAbortRef = useRef<AbortController | null>(null);
 
@@ -166,7 +209,13 @@ export default function FitFolioNavbarDesktop({
   }, [isItemsPage, searchParams]);
 
   const runSearch = () => {
-    const q = isItemsPage ? itemsPageInput.trim() : searchInput.trim();
+    const q = isItemsPage
+      ? itemsPageInput.trim()
+      : isListsPage
+        ? listsPageInput.trim()
+        : isMembersPage
+          ? membersPageInput.trim()
+          : searchInput.trim();
     if (!q) {
       setSearchResults([]);
       setHasSearched(false);
@@ -183,6 +232,29 @@ export default function FitFolioNavbarDesktop({
       params.set("q", q);
       if (searchMode === "smart") params.set("mode", "smart");
       router.replace(`/items?${params.toString()}`);
+      return;
+    }
+
+    if (isListsPage) {
+      if (listsPageUrlUpdateTimer.current) {
+        clearTimeout(listsPageUrlUpdateTimer.current);
+        listsPageUrlUpdateTimer.current = null;
+      }
+      const params = new URLSearchParams();
+      params.set("q", q);
+      router.replace(`/lists?${params.toString()}`);
+      return;
+    }
+
+    if (isMembersPage) {
+      if (membersPageUrlUpdateTimer.current) {
+        clearTimeout(membersPageUrlUpdateTimer.current);
+        membersPageUrlUpdateTimer.current = null;
+      }
+      const params = new URLSearchParams();
+      if (q) params.set("q", q);
+      const query = params.toString();
+      router.replace(query ? `/members?${query}` : "/members");
       return;
     }
 
@@ -229,7 +301,7 @@ export default function FitFolioNavbarDesktop({
 
   // Debounced search-as-you-type for quick search (when not on items page) - only in Filters mode; Smart mode requires Enter
   useEffect(() => {
-    if (isItemsPage || !isSearching || searchMode === "smart") return;
+    if (inlineSearchPage || !isSearching || searchMode === "smart") return;
 
     if (quickSearchDebounceTimer.current) {
       clearTimeout(quickSearchDebounceTimer.current);
@@ -251,7 +323,7 @@ export default function FitFolioNavbarDesktop({
     return () => {
       if (quickSearchDebounceTimer.current) clearTimeout(quickSearchDebounceTimer.current);
     };
-  }, [searchInput, isItemsPage, isSearching, searchMode]);
+  }, [searchInput, inlineSearchPage, isSearching, searchMode]);
 
   // Focus search input when opened
   useEffect(() => {
@@ -418,13 +490,17 @@ export default function FitFolioNavbarDesktop({
 
 
   return (
-    <header className={`top-0 z-50 w-full bg-black backdrop-blur  ${isItemsPage ? "relative" : "sticky"}`}>
+    <header
+      className={`top-0 z-50 w-full transition-colors duration-300 ${
+        navbarScrolled ? "bg-black/95" : "bg-transparent"
+      } ${inlineSearchPage ? "relative" : "sticky"}`}
+    >
       <div className="mx-auto flex items-center justify-between px-8 relative py-3">
         {/* Left spacer for centering */}
         <div className="flex-1"></div>
 
         {/* Center nav */}
-        <nav className="hidden md:flex items-center justify-center flex-1">
+        <nav className="hidden md:flex items-center justify-center">
           <ul className="flex items-center gap-12">
             <li>
               <Link
@@ -439,7 +515,7 @@ export default function FitFolioNavbarDesktop({
                 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
                 after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100 rounded-sm"
               >
-                Home
+                Community
               </Link>
             </li>
             <li>
@@ -464,7 +540,7 @@ export default function FitFolioNavbarDesktop({
                 ref={searchIconBtnRef}
                 onClick={handleSearchClick}
                 className={`rounded-xl px-1.5 py-1 text-[20px] font-medium text-white/85 outline-none transition-all duration-300 hover:text-white 
-                  ring-offset-2 flex-shrink-0 ${isSearching || isItemsPage ? "rotate-45" : ""}`}
+                  ring-offset-2 flex-shrink-0 ${isSearching || inlineSearchPage ? "rotate-45" : ""}`}
                 aria-label="Search"
               >
                 <SearchIcon />
@@ -490,7 +566,7 @@ export default function FitFolioNavbarDesktop({
               )} */}
 
               {/* Search Bar dropdown - only when not on /items (on items the input is inline) */}
-              {(isItemsPage || isSearching) && (
+              {(inlineSearchPage || isSearching) && (
                 <div 
                   ref={searchRef}
                   className="absolute top-1/2 translate-y-2 left-1/2 -translate-x-1/2 w-[550px] max-w-2xl px-4 pb-4 z-40"
@@ -530,6 +606,51 @@ export default function FitFolioNavbarDesktop({
                           }}
                           onKeyDown={(e) => e.key === "Enter" && runSearch()}
                           aria-label="Search items"
+                        />
+                      ) : isListsPage ? (
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          placeholder="Search collections and tier lists…"
+                          className="w-full h-12 pl-4 pr-4 rounded-full bg-[#000500] text-white placeholder:text-white/40 outline-none ring-2 ring-ff-cyan transition duration-300"
+                          value={listsPageInput}
+                          onChange={(e) => {
+                            const q = e.target.value;
+                            setListsPageInput(q);
+                            if (listsPageUrlUpdateTimer.current) clearTimeout(listsPageUrlUpdateTimer.current);
+                            listsPageUrlUpdateTimer.current = setTimeout(() => {
+                              listsPageUrlUpdateTimer.current = null;
+                              const params = new URLSearchParams();
+                              if (q.trim()) params.set("q", q);
+                              const query = params.toString();
+                              router.replace(query ? `/lists?${query}` : "/lists");
+                            }, 150);
+                          }}
+                          onKeyDown={(e) => e.key === "Enter" && runSearch()}
+                          aria-label="Search lists"
+                        />
+                      ) : isMembersPage ? (
+                        <input
+                          ref={searchInputRef}
+                          type="text"
+                          placeholder="Search members by username…"
+                          className="w-full h-12 pl-4 pr-4 rounded-full bg-[#000500] text-white placeholder:text-white/40 outline-none ring-2 ring-ff-cyan transition duration-300"
+                          value={membersPageInput}
+                          onChange={(e) => {
+                            const q = e.target.value;
+                            setMembersPageInput(q);
+                            if (membersPageUrlUpdateTimer.current)
+                              clearTimeout(membersPageUrlUpdateTimer.current);
+                            membersPageUrlUpdateTimer.current = setTimeout(() => {
+                              membersPageUrlUpdateTimer.current = null;
+                              const params = new URLSearchParams();
+                              if (q.trim()) params.set("q", q);
+                              const query = params.toString();
+                              router.replace(query ? `/members?${query}` : "/members");
+                            }, 150);
+                          }}
+                          onKeyDown={(e) => e.key === "Enter" && runSearch()}
+                          aria-label="Search members"
                         />
                       ) : (
                         <input
@@ -574,7 +695,7 @@ export default function FitFolioNavbarDesktop({
                     </div>
                   </div>
 
-                  {!isItemsPage && hasSearched && (
+                  {!inlineSearchPage && hasSearched && (
                     <div className="bg-white/6 p-4 rounded-3xl w-full mt-4 flex flex-col gap-2 items-center justify-center ">
                       <div className="bg-black w-full rounded-full px-6 py-3 overflow-hidden
                       flex items-center justify-between">
@@ -676,18 +797,18 @@ export default function FitFolioNavbarDesktop({
             </li>
             <li>
               <Link
-                href="/community"
+                href="/members"
                 onClick={(e) => {
                   if (onNavigate) {
                     e.preventDefault();
-                    onNavigate("/community");
+                    onNavigate("/members");
                   }
                 }}
                 className="block px-4 py-2 text-[20px] font-medium text-white/85 transition ring-ff-cyan relative hover:text-white 
                 after:content-[''] after:absolute after:left-0 after:right-0 after:bottom-0 after:h-[2px] after:bg-ff-cyan after:transition-opacity 
                 after:opacity-0 hover:after:opacity-100 focus-visible:after:opacity-100 rounded-sm"
               >
-                Community
+                Members
               </Link>
             </li>
           </ul>
@@ -729,7 +850,7 @@ export default function FitFolioNavbarDesktop({
                 ref={menuRef}
                 role="menu"
                 aria-label="Profile menu"
-                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border-b-2 border-ff-cyan bg-ff-black/80 shadow-xl"
+                className="absolute right-0 mt-2 w-56 overflow-hidden rounded-xl border-b-2 border-ff-cyan bg-black/80 shadow-xl z-50"
               >
                 <div className="relative p-1">
                   {loggedInUser ? (

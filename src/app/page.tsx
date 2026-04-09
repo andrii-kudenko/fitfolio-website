@@ -8,6 +8,18 @@ import { useEffect, useState } from "react";
 import { ItemFullResponse, ItemResponse } from "@/features/items/types/items.types";
 import { itemsApi } from "@/features/items/api/items.api";
 
+function readLoggedInUserId(): string | null {
+  if (typeof window === "undefined") return null;
+  const raw = localStorage.getItem("fitfolio_logged_in");
+  if (!raw) return null;
+  try {
+    const u = JSON.parse(raw) as { id?: string };
+    return typeof u?.id === "string" ? u.id : null;
+  } catch {
+    return null;
+  }
+}
+
 // const recommendedItems: ItemFullResponse[] = [
 //   {
 //     id: "a1b2c3d4-e5f6-1234-5678-abcdefabcdef",
@@ -234,7 +246,7 @@ export default function Home() {
   const [recommendedItems, setRecommendedItems] = useState<ItemFullResponse[]>([]);
 
   useEffect(() => {
-    itemsApi.getTopRecommended().then((data) => {
+    itemsApi.getTopRecommended(readLoggedInUserId()).then((data) => {
       setRecommendedItems(data);
     });
   }, []);
@@ -252,9 +264,20 @@ export default function Home() {
         /> */}
       
       {/* Hero Section */}
-      <section className="h-[100vh] bg-black flex items-center justify-center">
+      <section className="relative h-[70vh] flex items-center justify-center bg-black">
+        {/* Background Video */}
+        <video
+          className="absolute -top-[64px] left-0 w-full h-full object-cover z-0"
+          src="/home/hero-video.mp4"
+          autoPlay
+          loop
+          muted
+          playsInline
+        />
         {/* <div className={`absolute top-0 left-0 w-full h-full ${isSearching ? " bg-black/70" : ""}`}></div> */}
-        <div className="text-center max-w-4xl mx-auto">
+        {/* Overlay for readability */}
+        <div className="absolute -top-[64px] left-0 w-full h-full bg-black/60 z-10"></div>
+        <div className="text-center max-w-4xl mx-auto relative z-20">
           {/* Main Heading */}
           <h1 className="text-5xl md:text-6xl lg:text-7xl font-medium text-white mb-6 leading-tight">
             Rate. Compare. Discover what{' '}
@@ -272,12 +295,12 @@ export default function Home() {
       {/* Features Section */}
       <section className="flex flex-col items-center justify-center wrap">
 
-        {/* Content Frame */}
-        <div className="w-full max-w-[1440px] items-center justify-center flex flex-col gap-20">
+        {/* Content Frame — full width up to max, centered like a page container */}
+        <div className=" w-full max-w-7xl mx-auto px-2 sm:px-4 flex flex-col gap-8">
           {/* Banner Section */}
-          <div className="w-[100%]">
+          {/* <div className="w-[100%]">
             <Banner />
-          </div>
+          </div> */}
 
           {/* Recommended For You */}
           <ScrollableItemList items={recommendedItems} title="Recommended For You" />

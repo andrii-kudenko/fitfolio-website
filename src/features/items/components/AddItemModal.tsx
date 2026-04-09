@@ -1,21 +1,30 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef, useMemo } from "react";
+import { ImagePlus, Loader2, X } from "lucide-react";
 import { categoriesApi } from "@/features/categories/api/categories.api";
 import { brandsApi } from "@/features/brands/api/brands.api";
 import { imagesApi } from "@/features/images/api/images.api";
+import { fileToNormalizedJpeg } from "@/features/images/lib/normalizeImageFile";
 import { enrichmentApi } from "@/features/enrichment/api/enrichment.api";
 import { itemsApi } from "@/features/items/api/items.api";
 import type { CategoryResponse } from "@/features/categories/types/categories.types";
 import type { BrandResponse } from "@/features/brands/types/brands.types";
 import type { ItemCreate } from "@/features/items/types/items.types";
 import { ITEM_FILTER_COLORS } from "@/features/items/constants/colors";
+import { ITEM_IMAGE_STORE_SIZE_PX } from "@/features/items/constants/imageUpload";
 
 const DEPARTMENTS = [
-  { value: "Men", label: "Men" },
-  { value: "Women", label: "Women" },
-  { value: "Unisex", label: "Unisex" },
+  { value: "men", label: "Men" },
+  { value: "women", label: "Women" },
+  { value: "unisex", label: "Unisex" },
 ] as const;
+
+const labelClass =
+  "mb-1.5 block text-[11px] font-semibold uppercase tracking-[0.2em] text-ff-cyan/85";
+
+const fieldClass =
+  "w-full rounded-xl border border-white/15 bg-[#000500]/95 px-4 py-2.5 text-sm text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] placeholder:text-slate-500 outline-none transition focus:border-ff-cyan/55 focus:shadow-[0_0_0_1px_rgba(85,193,255,0.25)]";
 
 interface AddItemModalProps {
   isOpen: boolean;
@@ -23,8 +32,10 @@ interface AddItemModalProps {
   onSuccess?: () => void;
 }
 
+const ITEM_CREATE_NAME_MAX = 120;
+
 export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) {
-  const [name, setName] = useState("");
+  const [userPrompt, setUserPrompt] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [category1Id, setCategory1Id] = useState<string>("");
@@ -37,12 +48,14 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
   const [categories, setCategories] = useState<CategoryResponse[]>([]);
   const [brands, setBrands] = useState<BrandResponse[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [imageProcessing, setImageProcessing] = useState(false);
+  const imageProcessingRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   // Load categories and brands
   useEffect(() => {
     categoriesApi.getAllSimple().then(setCategories).catch(() => setCategories([]));
-    brandsApi.getAllSimple({ size: 200 }).then(setBrands).catch(() => setBrands([]));
+    brandsApi.getAllList().then(setBrands).catch(() => setBrands([]));
   }, []);
 
   // Layer 1: top-level (Apparel, Shoes, Accessories) - parentId is null
@@ -65,25 +78,68 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
   const selectedCategory = categories.find((c) => c.id === selectedCategoryId);
   const selectedBrand = brands.find((b) => b.id === brandId);
 
+  const brandsSorted = useMemo(
+    () =>
+      [...brands].sort((a, b) =>
+        a.name.localeCompare(b.name, undefined, { sensitivity: "base" })
+      ),
+    [brands]
+  );
+
   const handleImageChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      if (!file.type.match(/^image\/(jpeg|jpg|png)$/)) {
-        setError("Please select a JPEG or PNG image");
-        return;
-      }
-      setImageFile(file);
-      setImagePreview(URL.createObjectURL(file));
-      setError(null);
+    const input = e.target;
+    if (!file) return;
+    if (imageProcessingRef.current) return;
+
+    const looksLikeImage =
+      file.type.startsWith("image/") ||
+      /\.(jpe?g|png|gif|webp|bmp|avif|heic|heif)$/i.test(file.name);
+
+    if (!looksLikeImage) {
+      setError("Please select an image file");
+      input.value = "";
+      return;
     }
+
+    setError(null);
+    imageProcessingRef.current = true;
+    setImageProcessing(true);
+
+    void (async () => {
+      try {
+        const normalized = await fileToNormalizedJpeg(file, {
+          squareSide: ITEM_IMAGE_STORE_SIZE_PX,
+          fit: "contain",
+        });
+        setImageFile(normalized);
+        setImagePreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return URL.createObjectURL(normalized);
+        });
+      } catch {
+        setError(
+          "Could not process this image. Try another file or open it in Preview and export as JPEG."
+        );
+        setImageFile(null);
+        setImagePreview((prev) => {
+          if (prev) URL.revokeObjectURL(prev);
+          return null;
+        });
+      } finally {
+        imageProcessingRef.current = false;
+        setImageProcessing(false);
+        input.value = "";
+      }
+    })();
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    if (!name.trim()) {
-      setError("Name is required");
+    if (!userPrompt.trim()) {
+      setError("Please add a short description of the item");
       return;
     }
     if (!imageFile) {
@@ -105,23 +161,29 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
       // 1. Call enrichment to get metadata
       const metadata = await enrichmentApi.getMetadata({
         image: imageFile,
-        name: name.trim(),
+        itemPrompt: userPrompt.trim(),
         category: selectedCategory?.name ?? "",
         brand: selectedBrand?.name ?? "",
       });
+
+      const resolvedName = (metadata.itemName?.trim() || userPrompt.trim()).slice(
+        0,
+        ITEM_CREATE_NAME_MAX
+      );
 
       // 2. Upload image to get imageUrl
       const { publicUrl } = await imagesApi.uploadImage(imageFile, "item");
 
       // 3. Create item with metadata
       const itemCreate: ItemCreate = {
-        name: name.trim(),
+        name: resolvedName,
         status: "draft",
         brandId: brandId || undefined,
         categoryId: selectedCategoryId || undefined,
         imageUrl: publicUrl,
         department: department || undefined,
         primaryColor: primaryColor || undefined,
+        description: metadata.description?.trim() || undefined,
         themesTags: metadata.themes,
         occasionsTags: metadata.occasions,
         vibesTags: metadata.vibes,
@@ -144,9 +206,11 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
   };
 
   const handleClose = () => {
-    setName("");
+    setUserPrompt("");
     setImageFile(null);
     setImagePreview(null);
+    imageProcessingRef.current = false;
+    setImageProcessing(false);
     setCategory1Id("");
     setCategory2Id("");
     setCategory3Id("");
@@ -160,66 +224,108 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
 
   if (!isOpen) return null;
 
+
+  console.log(brandsSorted.length);
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
-      <div className="relative w-full max-w-md max-h-[90vh] overflow-y-auto rounded-lg border border-slate-700 bg-slate-900 p-6 shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/75 p-4 backdrop-blur-md"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="add-item-modal-title"
+    >
+      <div className="relative w-full max-w-md overflow-hidden rounded-2xl border border-ff-cyan/30 bg-gradient-to-b from-slate-950/98 via-[#030708] to-[#000500] shadow-[0_0_0_1px_rgba(85,193,255,0.06),0_28px_90px_rgba(0,0,0,0.85),0_0_80px_rgba(85,193,255,0.08)]">
+        <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-ff-cyan/75 to-transparent" />
+        <div className="pointer-events-none absolute inset-x-8 bottom-0 h-px bg-gradient-to-r from-transparent via-white/8 to-transparent" />
+
         <button
           type="button"
           onClick={handleClose}
-          className="absolute right-4 top-4 text-slate-400 hover:text-white text-xl"
+          className="absolute right-3 top-3 z-10 flex size-10 items-center justify-center rounded-xl border border-white/10 bg-[#000500]/90 text-slate-400 backdrop-blur-sm transition hover:border-ff-cyan/45 hover:bg-ff-cyan/10 hover:text-ff-cyan"
           aria-label="Close"
         >
-          ×
+          <X className="size-5" strokeWidth={2} />
         </button>
 
-        <h2 className="text-xl font-semibold text-white mb-6">ADD NEW ITEM</h2>
-
-        <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-          {/* Name */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Name of your item</label>
-            <input
-              type="text"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Name"
-              className="w-full rounded-lg border border-slate-600 bg-black px-4 py-2 text-white placeholder:text-slate-500 focus:border-ff-cyan focus:outline-none"
-            />
-          </div>
-
-          {/* Image */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Would you like to add a photo?</label>
-            <div className="flex items-center gap-4">
-              <input
-                type="file"
-                accept="image/jpeg,image/jpg,image/png"
-                onChange={handleImageChange}
-                className="hidden"
-                id="item-image"
-              />
-              <label
-                htmlFor="item-image"
-                className="flex items-center gap-2 cursor-pointer rounded-lg border border-slate-600 bg-slate-800 px-4 py-2 text-sm text-white hover:bg-slate-700 transition-colors"
-              >
-                <span>+</span> Upload image
-              </label>
-              {imagePreview && (
-                <div className="w-20 h-20 rounded-lg overflow-hidden border border-slate-600 flex-shrink-0">
-                  <img src={imagePreview} alt="Preview" className="w-full h-full object-cover" />
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Category 1st layer */}
-          <div>
-            <label className="block text-sm text-slate-300 mb-1">Choose category</label>
-            <select
-              value={category1Id}
-              onChange={(e) => setCategory1Id(e.target.value)}
-              className="w-full rounded-lg border border-slate-600 bg-black px-4 py-2 text-white focus:border-ff-cyan focus:outline-none"
+        <div className="scrollbar-hide max-h-[90vh] overflow-y-auto p-6 pt-8">
+          <header className="mb-7 pr-12">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.28em] text-ff-cyan/65">
+              Catalogue sync
+            </p>
+            <h2
+              id="add-item-modal-title"
+              className="mt-1.5 text-2xl font-bold tracking-tight text-white"
             >
+              Add new item
+            </h2>
+            <p className="mt-2 max-w-sm text-xs leading-relaxed text-slate-400">
+              Describe the piece in your own words. On submit we suggest a catalog title, tags, and product
+              copy from your photo and notes.
+            </p>
+          </header>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+            {/* User description → model derives item name */}
+            <div>
+              <label htmlFor="item-user-prompt" className={labelClass}>
+                Your description
+              </label>
+              <textarea
+                id="item-user-prompt"
+                value={userPrompt}
+                onChange={(e) => setUserPrompt(e.target.value)}
+                placeholder="Short prompt: color, fabric, fit, vibe — whatever helps identify the piece."
+                rows={3}
+                className={`${fieldClass} min-h-[5.5rem] resize-y`}
+              />
+            </div>
+
+            {/* Image */}
+            <div>
+              <span className={labelClass}>Hero image</span>
+              <div className="flex flex-wrap items-stretch gap-3">
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                  className="hidden"
+                  id="item-image"
+                />
+                <label
+                  htmlFor="item-image"
+                  className={`flex min-h-[5.5rem] flex-1 min-w-[10rem] cursor-pointer flex-col items-center justify-center gap-2 rounded-xl border border-dashed border-white/20 bg-white/[0.03] px-4 py-4 text-center transition hover:border-ff-cyan/40 hover:bg-ff-cyan/[0.06] ${
+                    imageProcessing ? "pointer-events-none opacity-55" : ""
+                  }`}
+                >
+                  {imageProcessing ? (
+                    <Loader2 className="size-7 text-ff-cyan animate-spin" strokeWidth={2} />
+                  ) : (
+                    <ImagePlus className="size-7 text-ff-cyan/90" strokeWidth={1.75} />
+                  )}
+                  <span className="text-xs font-medium text-white">
+                    {imageProcessing ? "Optimizing…" : "Upload or drop image"}
+                  </span>
+                  <span className="text-[11px] text-slate-500">JPEG, PNG, WebP…</span>
+                </label>
+                {imagePreview && (
+                  <div className="relative size-[5.5rem] shrink-0 overflow-hidden rounded-xl border border-ff-cyan/35 bg-black shadow-[0_0_24px_rgba(85,193,255,0.15)]">
+                    <img src={imagePreview} alt="" className="size-full object-cover" />
+                    <div className="pointer-events-none absolute inset-0 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.08)]" />
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Category 1st layer */}
+            <div>
+              <label htmlFor="item-category-1" className={labelClass}>
+                Category
+              </label>
+              <select
+                id="item-category-1"
+                value={category1Id}
+                onChange={(e) => setCategory1Id(e.target.value)}
+                className={fieldClass}
+              >
               <option value="">Choose an option</option>
               {layer1Categories.map((c) => (
                 <option key={c.id} value={c.id}>
@@ -232,11 +338,14 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
           {/* Subcategory 2nd layer */}
           {layer2Categories.length > 0 && (
             <div>
-              <label className="block text-sm text-slate-300 mb-1">Choose sub-category</label>
+              <label htmlFor="item-category-2" className={labelClass}>
+                Sub-category
+              </label>
               <select
+                id="item-category-2"
                 value={category2Id}
                 onChange={(e) => setCategory2Id(e.target.value)}
-                className="w-full rounded-lg border border-slate-600 bg-black px-4 py-2 text-white focus:border-ff-cyan focus:outline-none"
+                className={fieldClass}
               >
                 <option value="">Choose an option</option>
                 {layer2Categories.map((c) => (
@@ -251,11 +360,14 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
           {/* Subcategory 3rd layer */}
           {layer3Categories.length > 0 && (
             <div>
-              <label className="block text-sm text-slate-300 mb-1">Choose sub-category</label>
+              <label htmlFor="item-category-3" className={labelClass}>
+                Sub-category
+              </label>
               <select
+                id="item-category-3"
                 value={category3Id}
                 onChange={(e) => setCategory3Id(e.target.value)}
-                className="w-full rounded-lg border border-slate-600 bg-black px-4 py-2 text-white focus:border-ff-cyan focus:outline-none"
+                className={fieldClass}
               >
                 <option value="">Choose an option</option>
                 {layer3Categories.map((c) => (
@@ -269,14 +381,17 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
 
           {/* Brand */}
           <div>
-            <label className="block text-sm text-slate-300 mb-1">Choose brand</label>
+            <label htmlFor="item-brand" className={labelClass}>
+              Brand
+            </label>
             <select
+              id="item-brand"
               value={brandId}
               onChange={(e) => setBrandId(e.target.value)}
-              className="w-full rounded-lg border border-slate-600 bg-black px-4 py-2 text-white focus:border-ff-cyan focus:outline-none"
+              className={fieldClass}
             >
               <option value="">Choose an option</option>
-              {brands.map((b) => (
+              {brandsSorted.map((b) => (
                 <option key={b.id} value={b.id}>
                   {b.name}
                 </option>
@@ -286,11 +401,14 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
 
           {/* Department */}
           <div>
-            <label className="block text-sm text-slate-300 mb-1">Choose department</label>
+            <label htmlFor="item-department" className={labelClass}>
+              Department
+            </label>
             <select
+              id="item-department"
               value={department}
               onChange={(e) => setDepartment(e.target.value)}
-              className="w-full rounded-lg border border-slate-600 bg-black px-4 py-2 text-white focus:border-ff-cyan focus:outline-none"
+              className={fieldClass}
             >
               <option value="">Choose an option</option>
               {DEPARTMENTS.map((d) => (
@@ -303,38 +421,49 @@ export function AddItemModal({ isOpen, onClose, onSuccess }: AddItemModalProps) 
 
           {/* Primary color */}
           <div>
-            <label className="block text-sm text-slate-300 mb-2">Choose primary color</label>
-            <div className="flex flex-wrap gap-2">
+            <span className={labelClass}>Primary color</span>
+            <div className="mt-1 flex flex-wrap gap-2.5 rounded-xl border border-white/10 bg-white/[0.02] p-3">
               {ITEM_FILTER_COLORS.map((c) => (
                 <button
                   key={c.value}
                   type="button"
                   onClick={() => setPrimaryColor(primaryColor === c.value ? "" : c.value)}
-                  className={`w-8 h-8 rounded-full border-2 transition-colors ${
+                  className={`size-9 rounded-full border-2 transition-all ${
                     primaryColor === c.value
-                      ? "border-ff-cyan scale-110"
-                      : "border-slate-600 hover:border-slate-500"
+                      ? "border-ff-cyan scale-110 shadow-[0_0_16px_rgba(85,193,255,0.45)] ring-2 ring-ff-cyan/30"
+                      : "border-white/20 hover:border-ff-cyan/40 hover:scale-105"
                   }`}
                   style={{ backgroundColor: c.hex }}
                   title={c.label}
                   aria-label={c.label}
+                  aria-pressed={primaryColor === c.value}
                 />
               ))}
             </div>
           </div>
 
           {error && (
-            <p className="text-sm text-red-400">{error}</p>
+            <p className="rounded-xl border border-red-500/35 bg-red-500/10 px-3 py-2 text-sm text-red-300">
+              {error}
+            </p>
           )}
 
           <button
             type="submit"
-            disabled={submitting}
-            className="mt-4 w-full rounded-lg bg-ff-cyan py-3 text-sm font-medium text-black hover:bg-ff-cyan/90 disabled:opacity-60 transition-colors"
+            disabled={submitting || imageProcessing}
+            className="mt-1 w-full rounded-xl border border-ff-cyan/50 bg-gradient-to-r from-ff-cyan via-[#6ecfff] to-ff-blue py-3.5 text-sm font-bold uppercase tracking-[0.12em] text-black shadow-[0_0_28px_rgba(85,193,255,0.28)] transition hover:brightness-110 disabled:pointer-events-none disabled:opacity-50"
           >
-            {submitting ? "Submitting..." : "SUBMIT ITEM"}
+            {submitting ? (
+              <span className="inline-flex items-center justify-center gap-2">
+                <Loader2 className="size-4 animate-spin" strokeWidth={2.5} />
+                Submitting…
+              </span>
+            ) : (
+              "Commit item"
+            )}
           </button>
-        </form>
+          </form>
+        </div>
       </div>
     </div>
   );

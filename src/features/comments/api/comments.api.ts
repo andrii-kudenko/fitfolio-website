@@ -1,38 +1,39 @@
 import { api } from "@/shared/lib/api";
 import type {
-  CommentCreateItem,
+  CommentCreateRequest,
   CommentResponse,
   CommentPage,
+  CommentSubjectType,
   CommentUpdate,
 } from "../types/comments.types";
 
 export const commentsApi = {
   // -----------------------------
-  // Item comments
+  // Any subject (ITEM / COLLECTION / TIER_LIST)
   // -----------------------------
 
-  createForItem: async (
-    itemId: string,
-    payload: CommentCreateItem
-  ): Promise<CommentResponse> => {
-    const { data } = await api.post<CommentResponse>(
-      `/items/${itemId}/comments`,
-      payload
+  listForSubject: async (
+    subjectType: CommentSubjectType,
+    subjectId: string,
+    params?: { page?: number; size?: number; sort?: "newest" | "top" }
+  ): Promise<CommentPage> => {
+    const { data } = await api.get<CommentPage>(
+      `/comments/subject/${subjectType}/${subjectId}`,
+      {
+        params: {
+          sort: params?.sort ?? "newest",
+          page: params?.page ?? 0,
+          size: params?.size ?? 50,
+        },
+      }
     );
     return data;
   },
 
-  listForItem: async (
-    itemId: string,
-    params?: { page?: number; size?: number; sort?: "newest" | "top" }
-  ): Promise<CommentPage> => {
-    const { data } = await api.get<CommentPage>(`/items/${itemId}/comments`, {
-      params: {
-        sort: params?.sort ?? "newest",
-        page: params?.page ?? 0,
-        size: params?.size ?? 50,
-      },
-    });
+  createForSubject: async (
+    payload: CommentCreateRequest
+  ): Promise<CommentResponse> => {
+    const { data } = await api.post<CommentResponse>("/comments", payload);
     return data;
   },
 

@@ -311,7 +311,7 @@ export default function EditCollectionPage() {
 
   if (loading) {
     return (
-      <main className="min-h-screen bg-ff-black text-white">
+      <main className="min-h-screen bg-black text-white">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-center px-4 py-8">
           <div className="text-slate-400">Loading collection...</div>
         </div>
@@ -320,7 +320,7 @@ export default function EditCollectionPage() {
   }
 
   return (
-    <main className="min-h-screen bg-ff-black text-white overflow-x-hidden">
+    <main className="min-h-screen bg-black text-white overflow-x-hidden">
       <div className="mx-auto max-w-7xl px-4 py-8">
         {/* Header with Cancel, View Collection, and Save */}
         <div className="mb-8 flex items-center justify-between">
@@ -350,7 +350,7 @@ export default function EditCollectionPage() {
         <div className="space-y-8">
           {/* Main Form */}
           <div className="rounded-2xl border border-slate-800 bg-slate-950/80 p-8">
-            <h2 className="mb-6 text-xl font-semibold uppercase tracking-wide">EDIT COLLECTION</h2>
+            {/* <h2 className="mb-6 text-xl font-semibold uppercase tracking-wide">EDIT COLLECTION</h2> */}
 
             <div className="grid gap-8 md:grid-cols-2">
               {/* Left Column - Collection Details */}

@@ -9,7 +9,26 @@ import type {
   FitProfileCreate,
   FitProfileResponse,
   UserPage,
+  UserWithProfilesPage,
 } from "../types/users.types"; // adjust path if needed
+import type { PageMeta } from "@/shared/types/pagination";
+
+/** Spring Page may be flat (number, size, totalPages) or wrapped in `page`. */
+function normalizePage<T>(raw: UserWithProfilesPage & Record<string, unknown>): UserWithProfilesPage {
+  const content = raw.content ?? [];
+  if (raw.page && typeof raw.page === "object") {
+    return { content, page: raw.page as PageMeta };
+  }
+  return {
+    content,
+    page: {
+      size: Number(raw.size ?? 20),
+      number: Number(raw.number ?? 0),
+      totalElements: Number(raw.totalElements ?? content.length),
+      totalPages: Number(raw.totalPages ?? 0),
+    },
+  };
+}
 
 export const usersApi = {
   // ---------------------------------------------------------------------------
@@ -74,6 +93,14 @@ export const usersApi = {
     return data;
   },
 
+  getProfileByUsername: async (username: string): Promise<UserProfileResponse> => {
+    const normalized = username.toLowerCase();
+    const { data } = await api.get<UserProfileResponse>(
+      `/users/by-username/${encodeURIComponent(normalized)}/profile`
+    );
+    return data;
+  },
+
   upsertProfile: async (
     userId: string,
     payload: UserProfileCreate
@@ -105,5 +132,56 @@ export const usersApi = {
       payload
     );
     return data;
+  },
+
+  // ---------------------------------------------------------------------------
+  // Follow (session cookie)
+  // ---------------------------------------------------------------------------
+
+  follow: async (userId: string): Promise<void> => {
+    await api.post(`/users/${userId}/follow`);
+  },
+
+  unfollow: async (userId: string): Promise<void> => {
+    await api.delete(`/users/${userId}/follow`);
+  },
+
+  getFollowStatus: async (userId: string): Promise<{ following: boolean }> => {
+    const { data } = await api.get<{ following: boolean }>(
+      `/users/${userId}/follow-status`
+    );
+    return data;
+  },
+
+  getFollowers: async (
+    userId: string,
+    params?: { page?: number; size?: number }
+  ): Promise<UserWithProfilesPage> => {
+    const { data } = await api.get<UserWithProfilesPage & Record<string, unknown>>(
+      `/users/${userId}/followers`,
+      {
+        params: {
+          page: params?.page ?? 0,
+          size: params?.size ?? 20,
+        },
+      }
+    );
+    return normalizePage(data);
+  },
+
+  getFollowing: async (
+    userId: string,
+    params?: { page?: number; size?: number }
+  ): Promise<UserWithProfilesPage> => {
+    const { data } = await api.get<UserWithProfilesPage & Record<string, unknown>>(
+      `/users/${userId}/following`,
+      {
+        params: {
+          page: params?.page ?? 0,
+          size: params?.size ?? 20,
+        },
+      }
+    );
+    return normalizePage(data);
   },
 };

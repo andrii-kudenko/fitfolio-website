@@ -30,6 +30,13 @@ export const brandsApi = {
     return page.content;
   },
 
+  /** Every brand in the DB, sorted by name (single request; no paging). */
+  getAllList: async (): Promise<BrandResponse[]> => {
+    const { data } = await api.get<BrandResponse[]>("/brands/all");
+    console.log("getAllList", data.length);
+    return data;
+  },
+
   getById: async (id: string): Promise<BrandResponse> => {
     const { data } = await api.get<BrandResponse>(`/brands/${id}`);
     return data;

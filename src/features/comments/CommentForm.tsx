@@ -38,7 +38,7 @@ export default function CommentForm({
           value={text}
           onChange={(e) => setText(e.target.value)}
           placeholder={placeholder}
-          className="flex-1 bg-transparent border-b border-white/20 text-white placeholder:text-white/40 outline-none py-2"
+          className="flex-1 border-b border-slate-700 bg-transparent py-2 text-white placeholder:text-slate-500 outline-none focus:border-ff-cyan/60"
         />
         {onCancel && (
           <button
@@ -52,7 +52,7 @@ export default function CommentForm({
         <button
           type="submit"
           disabled={submitting || !text.trim()}
-          className="px-4 py-1.5 rounded-full bg-blue-500 text-white disabled:opacity-50"
+          className="rounded-full bg-ff-cyan px-4 py-1.5 text-sm font-medium text-black transition hover:bg-ff-cyan/90 disabled:opacity-50"
         >
           Send
         </button>
@@ -66,13 +66,13 @@ export default function CommentForm({
         value={text}
         onChange={(e) => setText(e.target.value)}
         placeholder={placeholder}
-        className="w-full min-h-[120px] rounded-xl border border-white/10 bg-transparent p-4 text-white placeholder:text-white/40 outline-none resize-none"
+        className="min-h-[120px] w-full resize-none rounded-xl border border-slate-700 bg-black/40 p-4 text-white placeholder:text-slate-500 outline-none focus:border-ff-cyan/50"
       />
       <div className="flex justify-end">
         <button
           type="submit"
           disabled={submitting || !text.trim()}
-          className="px-6 py-3 rounded-xl bg-blue-500 text-white disabled:opacity-50"
+          className="rounded-full bg-ff-cyan px-6 py-3 text-sm font-medium text-black transition hover:bg-ff-cyan/90 disabled:opacity-50"
         >
           Post
         </button>

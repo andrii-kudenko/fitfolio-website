@@ -5,6 +5,8 @@ import {
   SearchSort,
   SmartSearchResponse,
 } from "../types/search.types";
+import type { ListsSearchResponse } from "../types/listsSearch.types";
+import type { MembersSearchResponse } from "../types/membersSearch.types";
 
 export interface SearchParams {
   query: string;
@@ -120,5 +122,45 @@ export const searchApi = {
     );
     return data;
   },
-};
 
+  /**
+   * Public collections + tier lists in one list: latest first when {@code query} is omitted/blank;
+   * title relevance when {@code query} is set.
+   * GET /api/search/collections-and-tierlists/unified
+   */
+  searchLists: async (
+    params: { query?: string; viewerUserId?: string; limit?: number },
+    signal?: AbortSignal
+  ): Promise<ListsSearchResponse> => {
+    const q = new URLSearchParams();
+    const trimmed = params.query?.trim();
+    if (trimmed) q.set("query", trimmed);
+    if (params.viewerUserId) q.set("viewerUserId", params.viewerUserId);
+    q.set("limit", String(params.limit ?? 20));
+    const { data } = await api.get<ListsSearchResponse>(
+      `/search/collections-and-tierlists/unified?${q.toString()}`,
+      { signal }
+    );
+    return data;
+  },
+
+  /**
+   * Discover members (popular profiles when query omitted) or search usernames.
+   * GET /api/search/members
+   */
+  searchMembers: async (
+    params: { query?: string; viewerUserId?: string; limit?: number },
+    signal?: AbortSignal
+  ): Promise<MembersSearchResponse> => {
+    const q = new URLSearchParams();
+    const trimmed = params.query?.trim();
+    if (trimmed) q.set("query", trimmed);
+    if (params.viewerUserId) q.set("viewerUserId", params.viewerUserId);
+    q.set("limit", String(params.limit ?? 20));
+    const { data } = await api.get<MembersSearchResponse>(
+      `/search/members?${q.toString()}`,
+      { signal }
+    );
+    return data;
+  },
+};
