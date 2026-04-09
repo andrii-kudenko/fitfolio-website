@@ -1,6 +1,12 @@
 import type { EnrichmentResponse } from "../types/enrichment.types";
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || "https://api.fitfolio.app";
+/** Spring controllers live under `/api/*`; normalize when NEXT_PUBLIC_API_URL has no `/api` suffix. */
+function enrichmentMetadataUrl(): string {
+  const raw = process.env.NEXT_PUBLIC_API_URL || "https://api.fitfolio.app";
+  const base = raw.replace(/\/$/, "");
+  const root = base.endsWith("/api") ? base : `${base}/api`;
+  return `${root}/enrichment/metadata`;
+}
 
 export const enrichmentApi = {
   /**
@@ -24,7 +30,7 @@ export const enrichmentApi = {
       const token = localStorage.getItem("access_token");
       if (token) headers.Authorization = `Bearer ${token}`;
     }
-    const res = await fetch(`${API_BASE}/enrichment/metadata`, {
+    const res = await fetch(enrichmentMetadataUrl(), {
       method: "POST",
       body: formData,
       credentials: "include",
