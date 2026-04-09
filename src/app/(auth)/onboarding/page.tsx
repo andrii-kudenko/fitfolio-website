@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { ImageUpload } from "@/features/images/components/ImageUpload";
 
 interface User {
   id: string;
@@ -16,7 +17,7 @@ export default function OnboardingPage() {
   const [user, setUser] = useState<User | null>(null);
   const [username, setUsername] = useState("");
   const [bio, setBio] = useState("");
-  const [avatarUrl, setAvatarUrl] = useState("");
+  const [avatarObjectKey, setAvatarObjectKey] = useState<string | null>(null);
   const [message, setMessage] = useState("");
   const [loading, setLoading] = useState(false);
 
@@ -69,7 +70,7 @@ export default function OnboardingPage() {
           body: JSON.stringify({
             username: username.trim().toLowerCase(),
             bio: bio.trim() || null,
-            avatarUrl: avatarUrl.trim() || null,
+            avatarUrl: avatarObjectKey || null,
           }),
         }
       );
@@ -163,13 +164,12 @@ export default function OnboardingPage() {
           </div>
 
           <div className="flex flex-col gap-1">
-            <label className="text-sm font-bold text-white">Avatar URL</label>
-            <input
-              type="url"
-              className="border border-gray-500 rounded-sm px-2 py-1 text-sm bg-black text-white"
-              value={avatarUrl}
-              onChange={(e) => setAvatarUrl(e.target.value)}
-              placeholder="https://example.com/avatar.jpg (optional)"
+            <label className="text-sm font-bold text-white">Avatar</label>
+            <ImageUpload
+              context="profile"
+              entityId={user?.id}
+              onUploadSuccess={(objectKey) => setAvatarObjectKey(objectKey)}
+              currentPreview={null}
             />
             <p className="text-xs text-gray-500">
               You can add or change your avatar later

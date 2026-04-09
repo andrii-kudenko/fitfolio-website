@@ -1,62 +1,88 @@
 import { api } from "@/shared/lib/api";
 import type {
-  CommentCreate,
+  CommentCreateRequest,
   CommentResponse,
   CommentPage,
-  CommentLikeCreate,
-  CommentLikeResponse,
+  CommentSubjectType,
+  CommentUpdate,
 } from "../types/comments.types";
 
 export const commentsApi = {
-  // Create a new comment
-  create: async (payload: CommentCreate): Promise<CommentResponse> => {
-    const { data } = await api.post<CommentResponse>("/comments", payload);
-    return data;
-  },
+  // -----------------------------
+  // Any subject (ITEM / COLLECTION / TIER_LIST)
+  // -----------------------------
 
-  // Get a single comment by ID
-  getById: async (id: string): Promise<CommentResponse> => {
-    const { data } = await api.get<CommentResponse>(`/comments/${id}`);
-    return data;
-  },
-
-  // Get comments for a specific subject (item, collection, etc.)
-  getForSubject: async (
-    subjectType: string,
+  listForSubject: async (
+    subjectType: CommentSubjectType,
     subjectId: string,
-    params?: { page?: number; size?: number; sort?: string }
+    params?: { page?: number; size?: number; sort?: "newest" | "top" }
   ): Promise<CommentPage> => {
     const { data } = await api.get<CommentPage>(
       `/comments/subject/${subjectType}/${subjectId}`,
       {
         params: {
+          sort: params?.sort ?? "newest",
           page: params?.page ?? 0,
           size: params?.size ?? 50,
-          ...(params?.sort ? { sort: params.sort } : {}),
         },
       }
     );
     return data;
   },
 
-  // Soft delete comment
-  delete: async (id: string): Promise<void> => {
-    await api.delete(`/comments/${id}`);
+  createForSubject: async (
+    payload: CommentCreateRequest
+  ): Promise<CommentResponse> => {
+    const { data } = await api.post<CommentResponse>("/comments", payload);
+    return data;
   },
 
-  // ---- Likes ----
+  // -----------------------------
+  // Replies
+  // -----------------------------
 
-  like: async (payload: CommentLikeCreate): Promise<CommentLikeResponse> => {
-    const { data } = await api.post<CommentLikeResponse>(
-      "/comment-likes",
+  reply: async (
+    parentCommentId: string,
+    payload: { text: string }
+  ): Promise<CommentResponse> => {
+    const { data } = await api.post<CommentResponse>(
+      `/comments/${parentCommentId}/reply`,
       payload
     );
     return data;
   },
 
-  unlike: async (userId: string, commentId: string): Promise<void> => {
-    await api.delete("/comment-likes", {
-      params: { userId, commentId },
-    });
+  // -----------------------------
+  // Comment CRUD
+  // -----------------------------
+
+  getById: async (id: string): Promise<CommentResponse> => {
+    const { data } = await api.get<CommentResponse>(`/comments/${id}`);
+    return data;
+  },
+
+  update: async (
+    id: string,
+    payload: CommentUpdate
+  ): Promise<CommentResponse> => {
+    const { data } = await api.put<CommentResponse>(`/comments/${id}`, payload);
+    return data;
+  },
+
+  delete: async (id: string): Promise<void> => {
+    await api.delete(`/comments/${id}`);
+  },
+
+  // -----------------------------
+  // Likes
+  // -----------------------------
+
+  like: async (commentId: string) => {
+    const { data } = await api.post(`/comment-likes/${commentId}`);
+    return data;
+  },
+
+  unlike: async (commentId: string) => {
+    await api.delete(`/comment-likes/${commentId}`);
   },
 };

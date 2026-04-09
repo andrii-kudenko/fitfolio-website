@@ -40,11 +40,12 @@ export interface UserCreate {
   //                                  int followersCount, int followingCount,
   //                                  int collectionsCount, int tierListsCount)
   export interface UserProfileResponse {
-    id: string;
+    id?: string;
     userId: string;
     username: string;
     bio: string | null;
     avatarUrl: string | null;
+    avatarKey?: string | null;
     isVerified: boolean;
     followersCount: number;
     followingCount: number;
@@ -117,6 +118,15 @@ export interface UserCreate {
   }
   
   export type UserPage = PageResult<UserResponse>;
+
+  /** GET /users/{id}/followers | /following */
+  export interface UserWithProfilesResponse {
+    user: UserResponse;
+    profile: UserProfileResponse | null;
+    fitProfile: FitProfileResponse | null;
+  }
+
+  export type UserWithProfilesPage = PageResult<UserWithProfilesResponse>;
 
 
 // export interface User {

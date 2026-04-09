@@ -4,6 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "@/shared/styles/globals.css";
 import NavbarWrapper from "@/shared/components/navbar/NavbarWrapper";
 import ScrollToTop from "@/shared/components/scroll-to-top/ScrollToTop";
+import { FloatingAddButton } from "@/features/items/components/FloatingAddButton";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
           <NavbarWrapper isAuthenticated={false} />
         </Suspense>
         <ScrollToTop />
+        <FloatingAddButton />
 
         {/* Page content (Home, Profile, Items, etc.) */}
         <div className="">

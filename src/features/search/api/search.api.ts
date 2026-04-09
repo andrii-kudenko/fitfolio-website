@@ -3,7 +3,10 @@ import {
   ItemSearchResult,
   SearchFacetsResponse,
   SearchSort,
+  SmartSearchResponse,
 } from "../types/search.types";
+import type { ListsSearchResponse } from "../types/listsSearch.types";
+import type { MembersSearchResponse } from "../types/membersSearch.types";
 
 export interface SearchParams {
   query: string;
@@ -15,6 +18,7 @@ export interface SearchWithFiltersParams {
   brandIds?: string[];
   categoryIds?: string[];
   colors?: string[];
+  departments?: string[];
   minPrice?: number;
   maxPrice?: number;
   sort?: SearchSort;
@@ -27,6 +31,7 @@ export interface SearchFacetsParams {
   brandIds?: string[];
   categoryIds?: string[];
   colors?: string[];
+  departments?: string[];
   minPrice?: number;
   maxPrice?: number;
 }
@@ -63,6 +68,7 @@ export const searchApi = {
     params.brandIds?.forEach((id) => q.append("brandIds", id));
     params.categoryIds?.forEach((id) => q.append("categoryIds", id));
     params.colors?.forEach((c) => q.append("colors", c));
+    params.departments?.forEach((d) => q.append("departments", d));
     if (params.minPrice != null) q.set("minPrice", String(params.minPrice));
     if (params.maxPrice != null) q.set("maxPrice", String(params.maxPrice));
     q.set("sort", params.sort ?? "RELEVANCE");
@@ -89,6 +95,7 @@ export const searchApi = {
     params.brandIds?.forEach((id) => q.append("brandIds", id));
     params.categoryIds?.forEach((id) => q.append("categoryIds", id));
     params.colors?.forEach((c) => q.append("colors", c));
+    params.departments?.forEach((d) => q.append("departments", d));
     if (params.minPrice != null) q.set("minPrice", String(params.minPrice));
     if (params.maxPrice != null) q.set("maxPrice", String(params.maxPrice));
 
@@ -98,5 +105,62 @@ export const searchApi = {
     );
     return data;
   },
-};
 
+  /**
+   * Smart Search: hybrid brand/category + AI semantic parsing.
+   * POST /api/smart-search
+   */
+  smartSearch: async (
+    params: { query: string },
+    signal?: AbortSignal
+  ): Promise<SmartSearchResponse> => {
+    console.log("smartSearch", params.query);
+    const { data } = await api.post<SmartSearchResponse>(
+      "/smart-search",
+      { query: params.query?.trim() ?? "" },
+      { signal }
+    );
+    return data;
+  },
+
+  /**
+   * Public collections + tier lists in one list: latest first when {@code query} is omitted/blank;
+   * title relevance when {@code query} is set.
+   * GET /api/search/collections-and-tierlists/unified
+   */
+  searchLists: async (
+    params: { query?: string; viewerUserId?: string; limit?: number },
+    signal?: AbortSignal
+  ): Promise<ListsSearchResponse> => {
+    const q = new URLSearchParams();
+    const trimmed = params.query?.trim();
+    if (trimmed) q.set("query", trimmed);
+    if (params.viewerUserId) q.set("viewerUserId", params.viewerUserId);
+    q.set("limit", String(params.limit ?? 20));
+    const { data } = await api.get<ListsSearchResponse>(
+      `/search/collections-and-tierlists/unified?${q.toString()}`,
+      { signal }
+    );
+    return data;
+  },
+
+  /**
+   * Discover members (popular profiles when query omitted) or search usernames.
+   * GET /api/search/members
+   */
+  searchMembers: async (
+    params: { query?: string; viewerUserId?: string; limit?: number },
+    signal?: AbortSignal
+  ): Promise<MembersSearchResponse> => {
+    const q = new URLSearchParams();
+    const trimmed = params.query?.trim();
+    if (trimmed) q.set("query", trimmed);
+    if (params.viewerUserId) q.set("viewerUserId", params.viewerUserId);
+    q.set("limit", String(params.limit ?? 20));
+    const { data } = await api.get<MembersSearchResponse>(
+      `/search/members?${q.toString()}`,
+      { signal }
+    );
+    return data;
+  },
+};

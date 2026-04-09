@@ -30,6 +30,8 @@ export interface ReviewResponse {
   updatedAt: string;
   isVerified: boolean;
   likeCount: number;
+  /** When reviews are loaded with an authenticated session */
+  likedByViewer?: boolean;
   title: string | null;
   text: string | null;
   rating: number | null;

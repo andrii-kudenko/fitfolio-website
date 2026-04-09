@@ -11,11 +11,20 @@ import type {
 const DEBOUNCE_MS = 300;
 const DEFAULT_LIMIT = 20;
 
+function sameStringArray(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  return true;
+}
+
 export interface UseSearchState {
   query: string;
   selectedBrandIds: string[];
   selectedCategoryIds: string[];
   selectedColors: string[];
+  selectedDepartments: string[];
   minPrice?: number;
   maxPrice?: number;
   sort: SearchSort;
@@ -33,6 +42,7 @@ export interface UseSearchResult {
   setSelectedBrandIds: (ids: string[]) => void;
   setSelectedCategoryIds: (ids: string[]) => void;
   setSelectedColors: (colors: string[]) => void;
+  setSelectedDepartments: (departments: string[]) => void;
   setMinPrice: (v: number | undefined) => void;
   setMaxPrice: (v: number | undefined) => void;
   setSort: (s: SearchSort) => void;
@@ -46,6 +56,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
     selectedBrandIds: [],
     selectedCategoryIds: [],
     selectedColors: [],
+    selectedDepartments: [],
     minPrice: undefined,
     maxPrice: undefined,
     sort: "RELEVANCE",
@@ -87,6 +98,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
           brandIds: s.selectedBrandIds.length ? s.selectedBrandIds : undefined,
           categoryIds: s.selectedCategoryIds.length ? s.selectedCategoryIds : undefined,
           colors: s.selectedColors.length ? s.selectedColors : undefined,
+          departments: s.selectedDepartments.length ? s.selectedDepartments : undefined,
           minPrice: s.minPrice,
           maxPrice: s.maxPrice,
           sort: s.sort,
@@ -125,6 +137,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
           brandIds: s.selectedBrandIds.length ? s.selectedBrandIds : undefined,
           categoryIds: s.selectedCategoryIds.length ? s.selectedCategoryIds : undefined,
           colors: s.selectedColors.length ? s.selectedColors : undefined,
+          departments: s.selectedDepartments.length ? s.selectedDepartments : undefined,
           minPrice: s.minPrice,
           maxPrice: s.maxPrice,
         },
@@ -177,6 +190,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
     state.selectedBrandIds,
     state.selectedCategoryIds,
     state.selectedColors,
+    state.selectedDepartments,
     state.minPrice,
     state.maxPrice,
   ]);
@@ -196,23 +210,39 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
   }, []);
 
   const setSelectedBrandIds = useCallback((ids: string[]) => {
-    setState((s) => ({ ...s, selectedBrandIds: ids, page: 0 }));
+    setState((s) =>
+      sameStringArray(s.selectedBrandIds, ids) ? s : { ...s, selectedBrandIds: ids, page: 0 }
+    );
   }, []);
 
   const setSelectedCategoryIds = useCallback((ids: string[]) => {
-    setState((s) => ({ ...s, selectedCategoryIds: ids, page: 0 }));
+    setState((s) =>
+      sameStringArray(s.selectedCategoryIds, ids)
+        ? s
+        : { ...s, selectedCategoryIds: ids, page: 0 }
+    );
   }, []);
 
   const setSelectedColors = useCallback((colors: string[]) => {
-    setState((s) => ({ ...s, selectedColors: colors, page: 0 }));
+    setState((s) =>
+      sameStringArray(s.selectedColors, colors) ? s : { ...s, selectedColors: colors, page: 0 }
+    );
+  }, []);
+
+  const setSelectedDepartments = useCallback((departments: string[]) => {
+    setState((s) =>
+      sameStringArray(s.selectedDepartments, departments)
+        ? s
+        : { ...s, selectedDepartments: departments, page: 0 }
+    );
   }, []);
 
   const setMinPrice = useCallback((v: number | undefined) => {
-    setState((s) => ({ ...s, minPrice: v, page: 0 }));
+    setState((s) => (s.minPrice === v ? s : { ...s, minPrice: v, page: 0 }));
   }, []);
 
   const setMaxPrice = useCallback((v: number | undefined) => {
-    setState((s) => ({ ...s, maxPrice: v, page: 0 }));
+    setState((s) => (s.maxPrice === v ? s : { ...s, maxPrice: v, page: 0 }));
   }, []);
 
   const setSort = useCallback((sort: SearchSort) => {
@@ -233,6 +263,7 @@ export function useSearch(initialState?: Partial<UseSearchState>): UseSearchResu
     setSelectedBrandIds,
     setSelectedCategoryIds,
     setSelectedColors,
+    setSelectedDepartments,
     setMinPrice,
     setMaxPrice,
     setSort,

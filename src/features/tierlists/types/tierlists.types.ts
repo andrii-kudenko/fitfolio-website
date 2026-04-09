@@ -50,11 +50,21 @@ export interface TierListResponse {
   commentCount: number;
   itemCount: number;
   viewCount: number;
+  saveCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export type TierListPage = PageResult<TierListResponse>;
+
+/** List payload from GET /users/{id}/tierlists — includes viewer flags when viewerUserId is sent. */
+export interface TierListViewerResponse extends TierListResponse {
+  isLiked: boolean;
+  isSaved: boolean;
+  isCommented: boolean;
+}
+
+export type TierListViewerPage = PageResult<TierListViewerResponse>;
 
 // ---------------------------------------------------------------------------
 // TierListLike DTO mirrors
@@ -73,6 +83,22 @@ export interface TierListLikeResponse {
   tierListId: string;
   createdAt: string;
 }
+
+// Java: record TierListSaveCreate(UUID userId, UUID tierListId)
+export interface TierListSaveCreate {
+  userId: string;
+  tierListId: string;
+}
+
+// Java: record TierListSaveResponse(...)
+export interface TierListSaveResponse {
+  id: string;
+  userId: string;
+  tierListId: string;
+  createdAt: string;
+}
+
+export type TierListSavedPage = PageResult<TierListResponse>;
 
 // ---------------------------------------------------------------------------
 // Tier DTO mirrors
@@ -94,6 +120,16 @@ export interface TierResponse {
   name: string;
   color: string | null;
   position: number;
+}
+
+export interface TierListWithTiers extends TierListViewerResponse {
+  tiers: Array<{
+    tier: TierResponse;
+    items: Array<{
+      id: string;
+      imageUrl?: string;
+    }>;
+  }>;
 }
 
 // ---------------------------------------------------------------------------
@@ -138,6 +174,7 @@ export interface TierListDetailResponse {
   commentCount: number;
   itemCount: number;
   viewCount: number;
+  saveCount: number;
   createdAt: string;
   updatedAt: string;
   tiers: Array<{

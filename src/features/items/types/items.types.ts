@@ -25,8 +25,38 @@ export interface ItemResponse {
   commentCount: number;
   viewCount: number;
   likeCount: number;
+  saveCount: number;
   primaryColor?: string;
   rating?: number;
+}
+
+/** List row from GET /users/{userId}/items when viewerUserId is sent. */
+export interface ItemViewerResponse extends ItemResponse {
+  isLiked: boolean;
+  isSaved: boolean;
+  isCommented: boolean;
+}
+
+export type ItemViewerPage = PageResult<ItemViewerResponse>;
+
+/** Mirrors API {@code ItemUserEngagement} when {@code viewerUserId} is sent on full/detail. */
+export interface ItemUserEngagement {
+  isLiked: boolean;
+  isSaved: boolean;
+  isCommented: boolean;
+  isReviewed: boolean;
+}
+
+/** Mirrors API {@code ItemInsightsResponse} — AI summary of reviews when available. */
+export interface ItemReviewInsights {
+  summary: string;
+  pros: string[];
+  cons: string[];
+  themes: string[];
+  confidence: number;
+  sourceReviewCount: number;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ItemFullResponse {
@@ -34,15 +64,17 @@ export interface ItemFullResponse {
   brand?: BrandResponse;
   category?: CategoryResponse;
   contributor?: UserProfileResponse;
+  viewerEngagement?: ItemUserEngagement | null;
+  reviewInsights?: ItemReviewInsights | null;
 }
 
-  export type ItemPage = PageResult<ItemFullResponse>;
+export type ItemPage = PageResult<ItemResponse>;
   // export type ItemPageFull = PageResult<ItemFullResponse>;
 
   // Create payload (mirror your ItemCreate DTO)
   export interface ItemCreate {
     name: string;
-    status: string;
+    status?: string;
     slug?: string; // probably generated on backend, so optional here
     description?: string | null;
     sourceUrl?: string | null;
@@ -59,6 +91,15 @@ export interface ItemFullResponse {
     contributorId?: string | null;
     imageUrl?: string | null;
     details?: string[];
+    // Enrichment metadata (from OpenAI)
+    themesTags?: string[];
+    occasionsTags?: string[];
+    vibesTags?: string[];
+    stylesTags?: string[];
+    aestheticTags?: string[];
+    fitTags?: string[];
+    seasonTags?: string[];
+    functionTags?: string[];
   }
   
 
@@ -77,6 +118,29 @@ export interface ItemLikeCreate {
 }
 
 export interface ItemLikeResponse {
+  id: string;
+  userId: string;
+  itemId: string;
+  createdAt: string;
+}
+
+/** Spring Data `Page<ItemResponse>` shape for saved items list */
+export interface ItemSavedPage {
+  content: ItemResponse[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+// ---- ItemSave mirrors (explicit bookmark, not list membership) ----
+
+export interface ItemSaveCreate {
+  userId: string;
+  itemId: string;
+}
+
+export interface ItemSaveResponse {
   id: string;
   userId: string;
   itemId: string;

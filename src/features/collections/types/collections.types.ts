@@ -29,11 +29,39 @@ export interface CollectionResponse {
   commentCount: number;
   viewCount: number;
   itemCount: number;
+  saveCount: number;
   createdAt: string;
   updatedAt: string;
 }
 
 export type CollectionPage = PageResult<CollectionResponse>;
+
+/** List payload from GET /users/{id}/collections when viewerUserId is sent. */
+export interface CollectionViewerResponse extends CollectionResponse {
+  isLiked: boolean;
+  isSaved: boolean;
+  isCommented: boolean;
+}
+
+export type CollectionViewerPage = PageResult<CollectionViewerResponse>;
+
+export interface CollectionWithItems extends CollectionViewerResponse {
+  topItems: Array<{
+    id: string;
+    imageUrl?: string;
+  }>;
+}
+
+/** GET /collections/slug/{slug}/detail — includes ordered items; increments view count. */
+export interface CollectionDetailResponse extends CollectionResponse {
+  items: Array<{
+    id: string;
+    collectionId: string;
+    itemId: string;
+    rank: number | null;
+    createdAt: string;
+  }>;
+}
 
 // ----- Likes -----
 
@@ -43,6 +71,27 @@ export interface CollectionLikeCreate {
 }
 
 export interface CollectionLikeResponse {
+  id: string;
+  userId: string;
+  collectionId: string;
+  createdAt: string;
+}
+
+/** Spring Data `Page<CollectionResponse>` for saved collections */
+export interface CollectionSavedPage {
+  content: CollectionResponse[];
+  totalElements: number;
+  totalPages: number;
+  size: number;
+  number: number;
+}
+
+export interface CollectionSaveCreate {
+  userId: string;
+  collectionId: string;
+}
+
+export interface CollectionSaveResponse {
   id: string;
   userId: string;
   collectionId: string;
