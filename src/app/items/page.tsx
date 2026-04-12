@@ -149,9 +149,9 @@ function ItemsPageContent() {
     }
   }, [state, urlState.mode]);
 
-  // Load brands and categories for display names
+  // Load brands (only those used by items) and categories for facet display names
   useEffect(() => {
-    brandsApi.getAllSimple().then(setBrands).catch(() => setBrands([]));
+    brandsApi.getWithItems().then(setBrands).catch(() => setBrands([]));
     categoriesApi.getAllSimple().then(setCategories).catch(() => setCategories([]));
   }, []);
 

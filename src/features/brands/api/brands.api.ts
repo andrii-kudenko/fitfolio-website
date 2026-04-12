@@ -14,7 +14,7 @@ export const brandsApi = {
     const { data } = await api.get<BrandPage>("/brands", {
       params: {
         page: params?.page ?? 0,
-        size: params?.size ?? 50,
+        ...(params?.size !== undefined ? { size: params.size } : {}),
         ...(params?.sort ? { sort: params.sort } : {}),
       },
     });
@@ -33,7 +33,12 @@ export const brandsApi = {
   /** Every brand in the DB, sorted by name (single request; no paging). */
   getAllList: async (): Promise<BrandResponse[]> => {
     const { data } = await api.get<BrandResponse[]>("/brands/all");
-    console.log("getAllList", data.length);
+    return data;
+  },
+
+  /** Brands that have at least one item (sorted by name). Use for item filters so facet ids always resolve. */
+  getWithItems: async (): Promise<BrandResponse[]> => {
+    const { data } = await api.get<BrandResponse[]>("/brands/with-items");
     return data;
   },
 
