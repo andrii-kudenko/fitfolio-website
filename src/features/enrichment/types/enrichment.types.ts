@@ -11,4 +11,6 @@ export interface EnrichmentResponse {
   itemName: string;
   /** Plain-text product copy from the model (2–4 sentences). */
   description: string;
+  /** MiniLM search vector from ML API when embed succeeds; may be empty if ML is down. */
+  embedding?: number[];
 }
